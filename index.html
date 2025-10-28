@@ -230,6 +230,8 @@
             <h2 class="text-3xl font-bold text-white mb-2">Private Access</h2>
             <p class="text-gray-400 mb-6">Enter the secret key to unlock the music tools. The key is **Maestro2025**.</p>
             
+            <!-- ACCESSIBILITY FIX: Added an explicit label for the input -->
+            <label for="access-key-input" class="block text-sm font-medium text-gray-400 mb-1 text-left">Secret Key</label>
             <input type="password" id="access-key-input" placeholder="Enter key..." class="w-full bg-gray-700 border-2 border-gray-600 text-white text-lg rounded-lg focus:ring-secondary-pink focus:border-secondary-pink p-3 shadow-inner mb-4">
             
             <button id="unlock-btn" class="w-full bg-secondary-pink hover:bg-pink-600 text-white font-bold text-lg p-3 rounded-lg transition-all duration-200 transform hover:scale-[1.01] shadow-lg">
@@ -328,7 +330,8 @@
 
                         <!-- Accidental Toggle -->
                         <div class="md:self-end">
-                            <label for="accidental-toggle" class="block text-sm font-medium text-gray-400 mb-1">Accidentals</label>
+                            <!-- ACCESSIBILITY FIX: Removed 'for="accidental-toggle"' as this is a descriptive label for two buttons -->
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Accidentals</label>
                             <div class="flex bg-gray-700 border border-gray-600 rounded-lg overflow-hidden shadow-md">
                                 <button id="sharps-btn" class="w-1/2 p-3 text-lg font-bold bg-primary-teal text-gray-900 transition-colors duration-200"># Sharps</button>
                                 <button id="flats-btn" class="w-1/2 p-3 text-lg font-bold hover:bg-primary-teal/50 text-white transition-colors duration-200">b Flats</button>
