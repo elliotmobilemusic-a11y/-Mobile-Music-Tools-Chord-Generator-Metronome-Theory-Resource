@@ -160,19 +160,6 @@
             transform: scale(1.1); /* Subtle pulse */
         }
         
-        /* Resource Loading Indicator - Adjusted colors for dark theme */
-        .dot-pulse {
-            position: relative;
-            left: -9999px;
-            width: 10px;
-            height: 10px;
-            border-radius: 5px;
-            background-color: #fcd34d; /* accent-yellow */
-            color: #fcd34d;
-            box-shadow: 9999px 0 0 0 #fcd34d;
-            animation: dotPulse 1.5s infinite linear;
-        }
-        
         /* Ensure the prose styles for the generated resource are applied */
         #resource-content .prose {
             max-width: 100%;
@@ -188,6 +175,18 @@
         }
 
         /* Animations for dot pulse (color updated) */
+        .dot-pulse {
+            position: relative;
+            left: -9999px;
+            width: 10px;
+            height: 10px;
+            border-radius: 5px;
+            background-color: #fcd34d; /* accent-yellow */
+            color: #fcd34d;
+            box-shadow: 9999px 0 0 0 #fcd34d;
+            animation: dotPulse 1.5s infinite linear;
+        }
+        
         @keyframes dotPulse {
             0% { box-shadow: 9999px 0 0 0 #fcd34d; }
             30% { box-shadow: 9999px 0 0 0 #fcd34d; }
@@ -198,228 +197,268 @@
             100% { box-shadow: 9999px 0 0 0 #fcd34d; }
         }
 
-        @keyframes dotPulseBefore {
-            0% { box-shadow: 9984px 0 0 0 #fcd34d; }
-            30% { box-shadow: 9994px 0 0 0 #fcd34d; }
-            50% { box-shadow: 9984px 0 0 0 #fcd34d; }
-            70% { box-shadow: 9974px 0 0 0 #fcd34d; }
-            90% { box-shadow: 9984px 0 0 0 #fcd34d; }
-            100% { box-shadow: 9984px 0 0 0 #fcd34d; }
+        /* Full screen overlay for access gate */
+        #access-gate, #app-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(17, 24, 39, 0.95); /* Dark gray background */
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
         }
 
-        @keyframes dotPulseAfter {
-            0% { box-shadow: 10014px 0 0 0 #fcd34d; }
-            30% { box-shadow: 10004px 0 0 0 #fcd34d; }
-            50% { box-shadow: 10014px 0 0 0 #fcd34d; }
-            70% { box-shadow: 10024px 0 0 0 #fcd34d; }
-            90% { box-shadow: 10014px 0 0 0 #fcd34d; }
-            100% { box-shadow: 10014px 0 0 0 #fcd34d; }
+        #access-gate-card {
+            background-color: #1f2937;
+            border: 2px solid #2dd4bf;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
         }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen p-4 md:p-8 flex items-center justify-center">
 
+    <!-- ACCESS GATE OVERLAY (Visible first) -->
+    <div id="access-gate">
+        <div id="access-gate-card" class="rounded-xl p-8 text-center">
+            <i data-lucide="key" class="w-12 h-12 text-primary-teal mx-auto mb-4"></i>
+            <h2 class="text-3xl font-bold text-white mb-2">Private Access</h2>
+            <p class="text-gray-400 mb-6">Enter the secret key to unlock the music tools. The key is **Maestro2025**.</p>
+            
+            <input type="password" id="access-key-input" placeholder="Enter key..." class="w-full bg-gray-700 border-2 border-gray-600 text-white text-lg rounded-lg focus:ring-secondary-pink focus:border-secondary-pink p-3 shadow-inner mb-4">
+            
+            <button id="unlock-btn" class="w-full bg-secondary-pink hover:bg-pink-600 text-white font-bold text-lg p-3 rounded-lg transition-all duration-200 transform hover:scale-[1.01] shadow-lg">
+                Unlock Access
+            </button>
+            
+            <p id="access-message" class="text-red-400 mt-4 h-6"></p>
+        </div>
+    </div>
+
+    <!-- APP LOADING/AUTHENTICATING STATE (Hidden until key is correct) -->
+    <div id="app-loading" class="hidden flex-col items-center justify-center h-96 bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-10 border border-gray-700">
+        <div class="dot-pulse mb-4 !bg-primary-teal !text-primary-teal"></div>
+        <p class="text-xl text-primary-teal font-semibold">Authenticating User...</p>
+    </div>
+
     <div class="max-w-7xl w-full">
-        <main class="bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-10 border border-gray-700">
+        
+        <!-- Main Content (Hidden until authenticated) -->
+        <div id="authenticated-content" class="hidden">
             
-            <!-- Header -->
-            <div class="text-center mb-6">
-                <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-2">Mobile Music Tools</h1>
-            </div>
-
-            <!-- NAVIGATION DROP DOWN -->
-            <div class="flex justify-center mb-8">
-                <select id="view-selector" class="w-full max-w-md bg-gray-700 border-2 border-primary-teal text-white text-xl rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-lg font-bold transition-colors">
-                    <option value="chord-view">🎹 Piano Chord Diagram</option>
-                    <option value="songs-view">🎶 Simple Songs</option>
-                    <option value="metronome-view">⏰ Metronome</option>
-                    <option value="resources-view">📚 Resources & Tools</option>
-                </select>
-            </div>
-
-            ---
-            
-            <!-- 1. CHORD DIAGRAM GENERATOR VIEW -->
-            <section id="chord-view">
-                <h2 class="text-3xl font-bold text-white mb-4 border-b border-gray-700 pb-2">Chord Generation</h2>
+            <header class="mb-6 bg-gray-800 rounded-xl shadow-inner p-4 flex flex-col md:flex-row items-center justify-between border-b border-primary-teal/50">
+                <div class="text-center md:text-left mb-2 md:mb-0">
+                    <h1 class="text-3xl md:text-4xl font-extrabold text-white">Mobile Music Tools</h1>
+                    <p id="user-status" class="text-sm text-gray-400 mt-1">Status: Loading...</p>
+                </div>
                 
-                <div class="flex flex-wrap justify-center gap-4 mb-8">
+                <button id="sign-out-btn" class="bg-gray-600 hover:bg-red-500 text-white font-bold text-sm py-2 px-4 rounded-lg transition-colors duration-200 shadow-md flex items-center" style="display: none;">
+                    <i data-lucide="log-out" class="w-4 h-4 mr-2"></i>
+                    Sign Out
+                </button>
+            </header>
+            
+            <main class="bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-10 border border-gray-700">
+                
+                <!-- NAVIGATION DROP DOWN -->
+                <div class="flex justify-center mb-8">
+                    <select id="view-selector" class="w-full max-w-md bg-gray-700 border-2 border-primary-teal text-white text-xl rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-lg font-bold transition-colors">
+                        <option value="chord-view">🎹 Piano Chord Diagram</option>
+                        <option value="songs-view">🎶 Simple Songs</option>
+                        <option value="metronome-view">⏰ Metronome</option>
+                        <option value="resources-view">📚 Resources & Tools</option>
+                    </select>
+                </div>
+
+                ---
+                
+                <!-- 1. CHORD DIAGRAM GENERATOR VIEW -->
+                <section id="chord-view">
+                    <h2 class="text-3xl font-bold text-white mb-4 border-b border-gray-700 pb-2">Chord Generation</h2>
                     
-                    <!-- Root Note Selector -->
-                    <div>
-                        <label for="root-note" class="block text-sm font-medium text-gray-400 mb-1">Root Note</label>
-                        <select id="root-note" class="w-full md:w-48 bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-md">
-                            <!-- Options will be populated by JS -->
-                        </select>
-                    </div>
+                    <div class="flex flex-wrap justify-center gap-4 mb-8">
+                        
+                        <!-- Root Note Selector -->
+                        <div>
+                            <label for="root-note" class="block text-sm font-medium text-gray-400 mb-1">Root Note</label>
+                            <select id="root-note" class="w-full md:w-48 bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-md">
+                                <!-- Options will be populated by JS -->
+                            </select>
+                        </div>
 
-                    <!-- Chord Type Selector -->
-                    <div>
-                        <label for="chord-type" class="block text-sm font-medium text-gray-400 mb-1">Chord Type</label>
-                        <select id="chord-type" class="w-full md:w-64 bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-md">
-                            <!-- Options will be populated by JS -->
-                        </select>
-                    </div>
+                        <!-- Chord Type Selector -->
+                        <div>
+                            <label for="chord-type" class="block text-sm font-medium text-gray-400 mb-1">Chord Type</label>
+                            <select id="chord-type" class="w-full md:w-64 bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-md">
+                                <!-- Options will be populated by JS -->
+                            </select>
+                        </div>
 
-                    <!-- Inversion Selector -->
-                    <div>
-                        <label for="inversion" class="block text-sm font-medium text-gray-400 mb-1">Inversion</label>
-                        <select id="inversion" class="w-full md:w-40 bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-md">
-                            <option value="0">Root Position</option>
-                        </select>
-                    </div>
+                        <!-- Inversion Selector -->
+                        <div>
+                            <label for="inversion" class="block text-sm font-medium text-gray-400 mb-1">Inversion</label>
+                            <select id="inversion" class="w-full md:w-40 bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-md">
+                                <option value="0">Root Position</option>
+                            </select>
+                        </div>
 
-                    <!-- Base Octave Selector (UPDATED DEFAULT) -->
-                    <div>
-                        <label for="base-octave" class="block text-sm font-medium text-gray-400 mb-1">Base Octave</label>
-                        <select id="base-octave" class="w-full md:w-40 bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-md">
-                            <option value="3">Octave 3 (C3)</option>
-                            <option value="4" selected>Octave 4 (C4)</option> <!-- DEFAULT SET TO OCTAVE 4 -->
-                            <option value="5">Octave 5 (C5)</option>
-                        </select>
-                    </div>
+                        <!-- Base Octave Selector (UPDATED DEFAULT) -->
+                        <div>
+                            <label for="base-octave" class="block text-sm font-medium text-gray-400 mb-1">Base Octave</label>
+                            <select id="base-octave" class="w-full md:w-40 bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-md">
+                                <option value="3">Octave 3 (C3)</option>
+                                <option value="4" selected>Octave 4 (C4)</option> <!-- DEFAULT SET TO OCTAVE 4 -->
+                                <option value="5">Octave 5 (C5)</option>
+                            </select>
+                        </div>
 
-                    <!-- Play Mode Selector -->
-                    <div>
-                        <label for="play-mode" class="block text-sm font-medium text-gray-400 mb-1">Play Mode</label>
-                        <select id="play-mode" class="w-full md:w-48 bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-md">
-                            <option value="simultaneous">Simultaneous</option>
-                            <option value="arpeggiated">Arpeggiated</option>
-                        </select>
-                    </div>
+                        <!-- Play Mode Selector -->
+                        <div>
+                            <label for="play-mode" class="block text-sm font-medium text-gray-400 mb-1">Play Mode</label>
+                            <select id="play-mode" class="w-full md:w-48 bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-md">
+                                <option value="simultaneous">Simultaneous</option>
+                                <option value="arpeggiated">Arpeggiated</option>
+                            </select>
+                        </div>
 
-                    <!-- Accidental Toggle -->
-                    <div class="md:self-end">
-                        <label for="accidental-toggle" class="block text-sm font-medium text-gray-400 mb-1">Accidentals</label>
-                        <div class="flex bg-gray-700 border border-gray-600 rounded-lg overflow-hidden shadow-md">
-                            <button id="sharps-btn" class="w-1/2 p-3 text-lg font-bold bg-primary-teal text-gray-900 transition-colors duration-200"># Sharps</button>
-                            <button id="flats-btn" class="w-1/2 p-3 text-lg font-bold hover:bg-primary-teal/50 text-white transition-colors duration-200">b Flats</button>
+                        <!-- Accidental Toggle -->
+                        <div class="md:self-end">
+                            <label for="accidental-toggle" class="block text-sm font-medium text-gray-400 mb-1">Accidentals</label>
+                            <div class="flex bg-gray-700 border border-gray-600 rounded-lg overflow-hidden shadow-md">
+                                <button id="sharps-btn" class="w-1/2 p-3 text-lg font-bold bg-primary-teal text-gray-900 transition-colors duration-200"># Sharps</button>
+                                <button id="flats-btn" class="w-1/2 p-3 text-lg font-bold hover:bg-primary-teal/50 text-white transition-colors duration-200">b Flats</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- Chord Action Buttons -->
-                <div class="flex justify-center gap-4 mb-8 flex-wrap">
-                    <!-- Play Button -->
-                    <button id="play-btn" class="flex-1 max-w-[12rem] bg-secondary-pink hover:bg-pink-600 text-white font-bold text-lg p-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg">
-                        Play Chord
-                    </button>
-                    <!-- Stop Chord Button -->
-                    <button id="stop-btn" class="flex-1 max-w-[12rem] bg-gray-600 hover:bg-gray-500 text-white font-bold text-lg p-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg">
-                        Stop Chord
-                    </button>
-                    <!-- Download Button -->
-                    <button id="download-btn" class="flex-1 max-w-[12rem] bg-primary-teal hover:bg-teal-600 text-white font-bold text-lg p-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg">
-                        Download Image
-                    </button>
-                </div>
-
-                <!-- Chord Info Display -->
-                <div id="chord-info" class="text-center mb-10 h-16">
-                    <h2 id="chord-name" class="text-3xl font-extrabold text-white">C Major</h2>
-                    <p id="chord-notes" class="text-xl text-primary-teal">C4 - E4 - G4</p>
-                </div>
-
-                <!-- Piano Keyboard (Wider and horizontally scrollable) -->
-                <div class="flex justify-center overflow-x-scroll p-4 bg-gray-700 rounded-xl shadow-inner border border-gray-600">
-                    <div id="piano-keyboard" data-name="Piano-Diagram" class="relative flex flex-nowrap min-w-full">
-                        <!-- Piano keys will be generated by JS -->
-                    </div>
-                </div>
-            </section>
-
-            
-            ---
-            <!-- 2. METRONOME VIEW -->
-            <section id="metronome-view">
-                <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Metronome</h2>
-                <div class="flex flex-col lg:flex-row items-center justify-center gap-6 mb-8 p-6 bg-gray-700 rounded-xl shadow-lg flex-wrap">
                     
-                    <!-- BPM Control -->
-                    <div class="flex flex-col items-center gap-3 w-full sm:w-auto">
-                        <label for="bpm-input-metro" class="text-lg font-medium text-gray-300 whitespace-nowrap">Tempo (BPM):</label>
-                        <div class="flex items-center gap-4 w-full justify-center">
-                            <input type="number" id="bpm-input-metro" min="40" max="240" value="120" class="w-20 bg-gray-800 border border-gray-600 text-white text-lg rounded-lg focus:ring-accent-yellow focus:border-accent-yellow p-2 text-center shadow-inner">
-                            <input type="range" id="bpm-slider-metro" min="40" max="240" value="120" class="w-32 md:w-48 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer range-lg">
+                    <!-- Chord Action Buttons -->
+                    <div class="flex justify-center gap-4 mb-8 flex-wrap">
+                        <!-- Play Button -->
+                        <button id="play-btn" class="flex-1 max-w-[12rem] bg-secondary-pink hover:bg-pink-600 text-white font-bold text-lg p-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg">
+                            Play Chord
+                        </button>
+                        <!-- Stop Chord Button -->
+                        <button id="stop-btn" class="flex-1 max-w-[12rem] bg-gray-600 hover:bg-gray-500 text-white font-bold text-lg p-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg">
+                            Stop Chord
+                        </button>
+                        <!-- Download Button -->
+                        <button id="download-btn" class="flex-1 max-w-[12rem] bg-primary-teal hover:bg-teal-600 text-white font-bold text-lg p-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg">
+                            Download Image
+                        </button>
+                    </div>
+
+                    <!-- Chord Info Display -->
+                    <div id="chord-info" class="text-center mb-10 h-16">
+                        <h2 id="chord-name" class="text-3xl font-extrabold text-white">C Major</h2>
+                        <p id="chord-notes" class="text-xl text-primary-teal">C4 - E4 - G4</p>
+                    </div>
+
+                    <!-- Piano Keyboard (Wider and horizontally scrollable) -->
+                    <div class="flex justify-center overflow-x-scroll p-4 bg-gray-700 rounded-xl shadow-inner border border-gray-600">
+                        <div id="piano-keyboard" data-name="Piano-Diagram" class="relative flex flex-nowrap min-w-full">
+                            <!-- Piano keys will be generated by JS -->
                         </div>
                     </div>
+                </section>
 
-                    <!-- Metronome Tone Selector -->
-                    <div class="w-full sm:w-40">
-                        <label for="metro-tone-select" class="block text-sm font-medium text-gray-400 mb-1 text-center sm:text-left">Click Tone</label>
-                        <select id="metro-tone-select" class="w-full bg-gray-800 border border-gray-600 text-white text-lg rounded-lg focus:ring-accent-yellow focus:border-accent-yellow p-2 shadow-inner">
-                            <option value="sine" selected>Sine (Soft)</option>
-                            <option value="triangle">Triangle (Medium)</option>
-                            <option value="square">Square (Sharp)</option>
-                            <option value="sawtooth">Sawtooth (Buzzing)</option>
-                            <option value="membrane">Membrane (Drum)</option>
-                        </select>
+                
+                ---
+                <!-- 2. METRONOME VIEW -->
+                <section id="metronome-view" style="display: none;">
+                    <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Metronome</h2>
+                    <div class="flex flex-col lg:flex-row items-center justify-center gap-6 mb-8 p-6 bg-gray-700 rounded-xl shadow-lg flex-wrap">
+                        
+                        <!-- BPM Control -->
+                        <div class="flex flex-col items-center gap-3 w-full sm:w-auto">
+                            <label for="bpm-input-metro" class="text-lg font-medium text-gray-300 whitespace-nowrap">Tempo (BPM):</label>
+                            <div class="flex items-center gap-4 w-full justify-center">
+                                <input type="number" id="bpm-input-metro" min="40" max="240" value="120" class="w-20 bg-gray-800 border border-gray-600 text-white text-lg rounded-lg focus:ring-accent-yellow focus:border-accent-yellow p-2 text-center shadow-inner">
+                                <input type="range" id="bpm-slider-metro" min="40" max="240" value="120" class="w-32 md:w-48 h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer range-lg">
+                            </div>
+                        </div>
+
+                        <!-- Metronome Tone Selector -->
+                        <div class="w-full sm:w-40">
+                            <label for="metro-tone-select" class="block text-sm font-medium text-gray-400 mb-1 text-center sm:text-left">Click Tone</label>
+                            <select id="metro-tone-select" class="w-full bg-gray-800 border border-gray-600 text-white text-lg rounded-lg focus:ring-accent-yellow focus:border-accent-yellow p-2 shadow-inner">
+                                <option value="sine" selected>Sine (Soft)</option>
+                                <option value="triangle">Triangle (Medium)</option>
+                                <option value="square">Square (Sharp)</option>
+                                <option value="sawtooth">Sawtooth (Buzzing)</option>
+                                <option value="membrane">Membrane (Drum)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Metronome Indicator -->
+                        <div class="w-12 h-12 rounded-full bg-gray-500 shadow-xl mt-4 lg:mt-0 border-2 border-gray-400" id="metronome-indicator"></div>
+
+                        <!-- Metronome Buttons -->
+                        <div class="flex gap-4 w-full sm:w-auto mt-4 lg:mt-0">
+                            <button id="metro-start-btn" class="bg-accent-yellow hover:bg-yellow-600 text-gray-900 font-bold text-lg p-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] flex-1 shadow-lg">
+                                Start
+                            </button>
+                            <button id="metro-stop-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold text-lg p-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] flex-1 shadow-lg" disabled>
+                                Stop
+                            </button>
+                        </div>
                     </div>
+                </section>
+                
+                
+                ---
+                <!-- 3. SIMPLE SONGS VIEW -->
+                <section id="songs-view" style="display: none;">
+                    <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Simple Song Chord Progressions</h2>
                     
-                    <!-- Metronome Indicator -->
-                    <div class="w-12 h-12 rounded-full bg-gray-500 shadow-xl mt-4 lg:mt-0 border-2 border-gray-400" id="metronome-indicator"></div>
-
-                    <!-- Metronome Buttons -->
-                    <div class="flex gap-4 w-full sm:w-auto mt-4 lg:mt-0">
-                        <button id="metro-start-btn" class="bg-accent-yellow hover:bg-yellow-600 text-gray-900 font-bold text-lg p-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] flex-1 shadow-lg">
-                            Start
+                    <p class="text-gray-300 mb-6">These popular songs use easy, repetitive chord sequences. Click any **chord chip** to instantly see and play that chord on the diagram page!</p>
+                    
+                    <div id="songs-list" class="space-y-6">
+                        <!-- Songs will be rendered here by JS -->
+                    </div>
+                </section>
+                
+                
+                ---
+                <!-- 4. DYNAMIC RESOURCES VIEW -->
+                <section id="resources-view" style="display: none;">
+                    <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Dynamic Learning Resources</h2>
+                    
+                    <p class="text-gray-300 mb-6">Ask me anything about music theory, technique, or history, and I will generate a comprehensive resource for you, grounded in up-to-date information.</p>
+                    
+                    <!-- Query Input and Button -->
+                    <div class="flex flex-col sm:flex-row gap-3 mb-6">
+                        <input type="text" id="resource-query-input" placeholder="e.g., What is the I-IV-V chord progression?" class="flex-grow bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-secondary-pink focus:border-secondary-pink p-3 shadow-inner">
+                        <button id="resource-generate-btn" class="w-full sm:w-48 bg-secondary-pink hover:bg-pink-600 text-white font-bold text-lg p-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg">
+                            Generate Resource
                         </button>
-                        <button id="metro-stop-btn" class="bg-gray-600 hover:bg-gray-500 text-white font-bold text-lg p-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] flex-1 shadow-lg">
-                            Stop
-                        </button>
-                    </div>
-                </div>
-            </section>
-            
-            
-            ---
-            <!-- 3. SIMPLE SONGS VIEW -->
-            <section id="songs-view">
-                <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Simple Song Chord Progressions</h2>
-                
-                <p class="text-gray-300 mb-6">These popular songs use easy, repetitive chord sequences. Click any **chord chip** to instantly see and play that chord on the diagram page!</p>
-                
-                <div id="songs-list" class="space-y-6">
-                    <!-- Songs will be rendered here by JS -->
-                </div>
-            </section>
-            
-            
-            ---
-            <!-- 4. DYNAMIC RESOURCES VIEW -->
-            <section id="resources-view">
-                <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Dynamic Learning Resources</h2>
-                
-                <p class="text-gray-300 mb-6">Ask me anything about music theory, technique, or history, and I will generate a comprehensive resource for you, grounded in up-to-date information.</p>
-                
-                <!-- Query Input and Button -->
-                <div class="flex flex-col sm:flex-row gap-3 mb-6">
-                    <input type="text" id="resource-query-input" placeholder="e.g., What is the I-IV-V chord progression?" class="flex-grow bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-secondary-pink focus:border-secondary-pink p-3 shadow-inner">
-                    <button id="resource-generate-btn" class="w-full sm:w-48 bg-secondary-pink hover:bg-pink-600 text-white font-bold text-lg p-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg">
-                        Generate Resource
-                    </button>
-                </div>
-                
-                <!-- Resource Output Area (relative positioning for custom alert) -->
-                <div id="resource-output-card" class="bg-gray-700 p-6 rounded-xl shadow-inner border-l-4 border-primary-teal min-h-[150px] flex items-center justify-center relative">
-                    <p class="text-gray-400 italic" id="initial-message">
-                        The generated resource will appear here. Try asking a question above!
-                    </p>
-                    
-                    <!-- Loading Indicator (Hidden by default) -->
-                    <div id="resource-loading" class="hidden flex-col items-center p-4">
-                        <div class="dot-pulse mb-3"></div>
-                        <p class="text-accent-yellow font-semibold">Generating your custom resource...</p>
                     </div>
                     
-                    <!-- Dynamic Content -->
-                    <div id="resource-content" class="hidden w-full">
-                        <!-- Content, sources, and links will be populated here -->
+                    <!-- Resource Output Area (relative positioning for custom alert) -->
+                    <div id="resource-output-card" class="bg-gray-700 p-6 rounded-xl shadow-inner border-l-4 border-primary-teal min-h-[150px] flex items-center justify-center relative">
+                        <p class="text-gray-400 italic" id="initial-message">
+                            The generated resource will appear here. Try asking a question above!
+                        </p>
+                        
+                        <!-- Loading Indicator (Hidden by default) -->
+                        <div id="resource-loading" class="hidden flex-col items-center p-4">
+                            <div class="dot-pulse mb-3"></div>
+                            <p class="text-accent-yellow font-semibold">Generating your custom resource...</p>
+                        </div>
+                        
+                        <!-- Dynamic Content -->
+                        <div id="resource-content" class="hidden w-full">
+                            <!-- Content, sources, and links will be populated here -->
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-        </main>
+            </main>
+        </div>
         
         <!-- Copyright Footer with Title Case -->
         <footer class="text-center mt-6 mb-4 text-sm text-gray-500">
@@ -429,945 +468,994 @@
     </div>
 
     <!-- JavaScript Logic -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- 1. DATA DEFINITIONS ---
-            
-            const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-            // Mapping for flat display names to internal sharp notes
-            const SHARP_TO_FLAT = { 'C#': 'Db', 'D#': 'Eb', 'F#': 'Gb', 'G#': 'Ab', 'A#': 'Bb' };
-            const FLAT_TO_SHARP = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' }; // For reverse lookup
-            
-            const CHORD_FORMULAS = {
-                'Major': [0, 4, 7], 'Minor': [0, 3, 7], 'Diminished': [0, 3, 6], 'Augmented': [0, 4, 8],
-                'Suspended 2 (sus2)': [0, 2, 7], 'Suspended 4 (sus4)': [0, 5, 7], 'Major 7th (Maj7)': [0, 4, 7, 11],
-                'Minor 7th (m7)': [0, 3, 7, 10], 'Dominant 7th (7)': [0, 4, 7, 10], 'Diminished 7th (dim7)': [0, 3, 6, 9],
-                'Half-Diminished (m7b5)': [0, 3, 6, 10], 'Major 6th (6)': [0, 4, 7, 9], 'Minor 6th (m6)': [0, 3, 7, 9],
-                'Add 9 (add9)': [0, 4, 7, 14], 'Major 9th (Maj9)': [0, 4, 7, 11, 14], 'Minor 9th (m9)': [0, 3, 7, 10, 14],
-                'Dominant 9th (9)': [0, 4, 7, 10, 14], '7 Suspended 4 (7sus4)': [0, 5, 7, 10], 
-                'Dominant 11th (11)': [0, 4, 7, 10, 14, 17], 'Major 11th (Maj11)': [0, 4, 7, 11, 14, 17],
-                'Minor 11th (m11)': [0, 3, 7, 10, 14, 17], 'Dominant 13th (13)': [0, 4, 7, 10, 14, 17, 21],
-            };
-            const WHITE_NOTES_OCTAVE = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-            const NUM_OCTAVES = 3; 
-            const START_OCTAVE = 3; 
-            
-            // API Setup
-            const API_KEY = ""; 
-            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
-            const SYSTEM_PROMPT = "You are a highly experienced and friendly music theory tutor. Your task is to provide a concise, single-paragraph explanation of the user's music query, followed by a detailed, structured section (use bullet points or lists) that provides specific, actionable practice advice and examples. The goal is to provide a comprehensive, grounded resource for the musician. Do not use external links in the generated text content. Base your answer solely on the information you find.";
+    <script type="module">
+        // --- FIREBASE IMPORTS ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- GLOBAL FIREBASE/APP VARIABLES ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        // --- SECRET ACCESS KEY ---
+        const SECRET_ACCESS_KEY = "Maestro2025"; 
 
-            const SIMPLE_SONGS = [
-                { title: "Let It Be", artist: "The Beatles", key: "C Major", progression: ["C Major", "G Major", "A Minor", "F Major"] },
-                { title: "Don't Stop Believin'", artist: "Journey", key: "E Major", progression: ["E Major", "B Major", "C# Minor", "A Major"] },
-                { title: "Three Little Birds", artist: "Bob Marley", key: "A Major", progression: ["A Major", "D Major", "E Major"] },
-                { title: "No Woman, No Cry", artist: "Bob Marley", key: "C Major", progression: ["C Major", "G Major", "A Minor", "F Major"] },
-                { title: "Hallelujah", artist: "Leonard Cohen", key: "C Major", progression: ["C Major", "G Major", "A Minor", "F Major"] },
-                { title: "With or Without You", artist: "U2", key: "D Major", progression: ["D Major", "A Major", "B Minor", "G Major"] },
-                { title: "Sweet Caroline", artist: "Neil Diamond", key: "D Major", progression: ["D Major", "G Major", "A Major", "D Major"] },
-                { title: "Imagine", artist: "John Lennon", key: "C Major", progression: ["C Major", "F Major", "G Major", "C Major"] },
-                { title: "Someone Like You", artist: "Adele", key: "A Major", progression: ["A Major", "E Major", "F# Minor", "D Major"] },
-                { title: "Heartbreak Hotel", artist: "Elvis Presley", key: "E Minor", progression: ["E Minor", "C Major", "G Major", "D Major"] }
-            ];
+        let app = null;
+        let db = null;
+        let auth = null;
+        let userId = null; 
+        
+        // --- 1. DATA DEFINITIONS ---
+        
+        const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const SHARP_TO_FLAT = { 'C#': 'Db', 'D#': 'Eb', 'F#': 'Gb', 'G#': 'Ab', 'A#': 'Bb' };
+        const FLAT_TO_SHARP = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' }; 
+        
+        const CHORD_FORMULAS = {
+            'Major': [0, 4, 7], 'Minor': [0, 3, 7], 'Diminished': [0, 3, 6], 'Augmented': [0, 4, 8],
+            'Suspended 2 (sus2)': [0, 2, 7], 'Suspended 4 (sus4)': [0, 5, 7], 'Major 7th (Maj7)': [0, 4, 7, 11],
+            'Minor 7th (m7)': [0, 3, 7, 10], 'Dominant 7th (7)': [0, 4, 7, 10], 'Diminished 7th (dim7)': [0, 3, 6, 9],
+            'Half-Diminished (m7b5)': [0, 3, 6, 10], 'Major 6th (6)': [0, 4, 7, 9], 'Minor 6th (m6)': [0, 3, 7, 9],
+            'Add 9 (add9)': [0, 4, 7, 14], 'Major 9th (Maj9)': [0, 4, 7, 11, 14], 'Minor 9th (m9)': [0, 3, 7, 10, 14],
+            'Dominant 9th (9)': [0, 4, 7, 10, 14], '7 Suspended 4 (7sus4)': [0, 5, 7, 10], 
+            'Dominant 11th (11)': [0, 4, 7, 10, 14, 17], 'Major 11th (Maj11)': [0, 4, 7, 11, 14, 17],
+            'Minor 11th (m11)': [0, 3, 7, 10, 14, 17], 'Dominant 13th (13)': [0, 4, 7, 10, 14, 17, 21],
+        };
+        const WHITE_NOTES_OCTAVE = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+        const NUM_OCTAVES = 3; 
+        const START_OCTAVE = 3; 
+        
+        // API Setup
+        const API_KEY = ""; 
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
+        const SYSTEM_PROMPT = "You are a highly experienced and friendly music theory tutor. Your task is to provide a concise, single-paragraph explanation of the user's music query, followed by a detailed, structured section (use bullet points or lists) that provides specific, actionable practice advice and examples. The goal is to provide a comprehensive, grounded resource for the musician. Do not use external links in the generated text content. Base your answer solely on the information you find.";
+
+        const SIMPLE_SONGS = [
+            { title: "Let It Be", artist: "The Beatles", key: "C Major", progression: ["C Major", "G Major", "A Minor", "F Major"] },
+            { title: "Don't Stop Believin'", artist: "Journey", key: "E Major", progression: ["E Major", "B Major", "C# Minor", "A Major"] },
+            { title: "Three Little Birds", artist: "Bob Marley", key: "A Major", progression: ["A Major", "D Major", "E Major"] },
+            { title: "No Woman, No Cry", artist: "Bob Marley", key: "C Major", progression: ["C Major", "G Major", "A Minor", "F Major"] },
+            { title: "Hallelujah", artist: "Leonard Cohen", key: "C Major", progression: ["C Major", "G Major", "A Minor", "F Major"] },
+            { title: "With or Without You", artist: "U2", key: "D Major", progression: ["D Major", "A Major", "B Minor", "G Major"] },
+            { title: "Sweet Caroline", artist: "Neil Diamond", key: "D Major", progression: ["D Major", "G Major", "A Major", "D Major"] },
+            { title: "Imagine", artist: "John Lennon", key: "C Major", progression: ["C Major", "F Major", "G Major", "C Major"] },
+            { title: "Someone Like You", artist: "Adele", key: "A Major", progression: ["A Major", "E Major", "F# Minor", "D Major"] },
+            { title: "Heartbreak Hotel", artist: "Elvis Presley", key: "E Minor", progression: ["E Minor", "C Major", "G Major", "D Major"] }
+        ];
 
 
-            // --- 2. STATE & TONE.JS SETUP ---
-            let useSharps = true;
-            let synth = null; 
-            let metronomeSynth = null; 
-            let membraneSynth = null; 
-            let arpeggiator = null; 
-            let metronomeLoop = null; 
-            let currentMetroTone = 'sine'; 
-            let audioContextReady = false;
+        // --- 2. STATE & TONE.JS SETUP ---
+        let useSharps = true;
+        let synth = null; 
+        let metronomeSynth = null; 
+        let membraneSynth = null; 
+        let arpeggiator = null; 
+        let metronomeLoop = null; 
+        let currentMetroTone = 'sine'; 
+        let audioContextReady = false;
 
-            function initTone() {
-                try {
-                    if (!audioContextReady) {
-                        // This prevents Tone.js from restarting everything if it was already running (e.g., from metronome)
-                        if (Tone.Transport.state === 'started') {
-                             Tone.Transport.stop();
-                        }
-                        Tone.Transport.clear(0);
-                        
-                        const reverb = new Tone.Reverb({
-                            decay: 2.5, 
-                            preDelay: 0.01
-                        }).toDestination();
-
-                        // Initialize Piano Polysynth
-                        synth = new Tone.PolySynth(Tone.Synth, {
-                            oscillator: { type: "sine" }, // Smoother sine wave
-                            envelope: { 
-                                attack: 0.005, decay: 0.6, sustain: 0.3, release: 1.8   
-                            }
-                        }).connect(reverb); 
-                        
-                        // Initialize standard Tone.Synth for flexible metronome clicks
-                        metronomeSynth = new Tone.Synth({
-                            oscillator: { type: currentMetroTone }, 
-                            envelope: {
-                                attack: 0.001, decay: 0.1, sustain: 0, release: 0.1,
-                            }
-                        }).toDestination();
-                        
-                        // Initialize MembraneSynth for drum click option
-                        membraneSynth = new Tone.MembraneSynth({
-                            pitchDecay: 0.008,
-                            octaves: 2,
-                            envelope: {
-                                attack: 0.001, decay: 0.1, sustain: 0,
-                            }
-                        }).toDestination();
-
-                        Tone.Transport.bpm.value = 120;
-                        audioContextReady = true;
+        function initTone() {
+            try {
+                if (!audioContextReady) {
+                    if (Tone.Transport.state === 'started') {
+                            Tone.Transport.stop();
                     }
-                } catch (e) {
-                    console.error("Tone.js initialization failed.", e);
+                    Tone.Transport.clear(0);
+                    
+                    const reverb = new Tone.Reverb({
+                        decay: 2.5, 
+                        preDelay: 0.01
+                    }).toDestination();
+
+                    synth = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: "sine" }, 
+                        envelope: { 
+                            attack: 0.005, decay: 0.6, sustain: 0.3, release: 1.8   
+                        }
+                    }).connect(reverb); 
+                    
+                    metronomeSynth = new Tone.Synth({
+                        oscillator: { type: currentMetroTone }, 
+                        envelope: {
+                            attack: 0.001, decay: 0.1, sustain: 0, release: 0.1,
+                        }
+                    }).toDestination();
+                    
+                    membraneSynth = new Tone.MembraneSynth({
+                        pitchDecay: 0.008,
+                        octaves: 2,
+                        envelope: {
+                            attack: 0.001, decay: 0.1, sustain: 0,
+                        }
+                    }).toDestination();
+
+                    Tone.Transport.bpm.value = 120;
+                    audioContextReady = true;
+                }
+            } catch (e) {
+                console.error("Tone.js initialization failed.", e);
+            }
+        }
+
+
+        // --- 3. DOM ELEMENT REFERENCES ---
+        // Access Gate
+        const accessGateEl = document.getElementById('access-gate');
+        const accessKeyInput = document.getElementById('access-key-input');
+        const unlockBtn = document.getElementById('unlock-btn');
+        const accessMessageEl = document.getElementById('access-message');
+
+        // Auth/Gating
+        const appLoadingEl = document.getElementById('app-loading');
+        const authenticatedContentEl = document.getElementById('authenticated-content');
+        const userStatusEl = document.getElementById('user-status');
+        const signOutBtn = document.getElementById('sign-out-btn');
+
+        // Navigation
+        const viewSelector = document.getElementById('view-selector');
+        const chordView = document.getElementById('chord-view');
+        const metronomeView = document.getElementById('metronome-view');
+        const resourcesView = document.getElementById('resources-view'); 
+        const songsView = document.getElementById('songs-view');
+        
+        // Chord Elements
+        const rootSelect = document.getElementById('root-note');
+        const typeSelect = document.getElementById('chord-type');
+        const inversionSelect = document.getElementById('inversion');
+        const baseOctaveSelect = document.getElementById('base-octave');
+        const playModeSelect = document.getElementById('play-mode');
+        const chordNameEl = document.getElementById('chord-name');
+        const chordNotesEl = document.getElementById('chord-notes');
+        const pianoContainer = document.getElementById('piano-keyboard');
+        const downloadBtn = document.getElementById('download-btn');
+        const playBtn = document.getElementById('play-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const sharpsBtn = document.getElementById('sharps-btn');
+        const flatsBtn = document.getElementById('flats-btn');
+        
+        // Metronome Elements
+        const bpmInput = document.getElementById('bpm-input-metro');
+        const bpmSlider = document.getElementById('bpm-slider-metro');
+        const metroStartBtn = document.getElementById('metro-start-btn');
+        const metroStopBtn = document.getElementById('metro-stop-btn');
+        const metronomeIndicator = document.getElementById('metronome-indicator');
+        const metroToneSelect = document.getElementById('metro-tone-select'); 
+        
+        // Resource Elements
+        const resourceQueryInput = document.getElementById('resource-query-input');
+        const resourceGenerateBtn = document.getElementById('resource-generate-btn');
+        const initialMessageEl = document.getElementById('initial-message');
+        const resourceLoadingEl = document.getElementById('resource-loading');
+        const resourceContentEl = document.getElementById('resource-content');
+        
+        // Song Elements
+        const songsListEl = document.getElementById('songs-list');
+
+
+        // --- 4. CORE UTILITIES & VIEWS LOGIC ---
+
+        function switchView(viewId) {
+            if (Tone.context.state !== 'running') { Tone.start(); }
+
+            if (viewId !== 'metronome-view') {
+                stopMetronome();
+            }
+            stopChord();
+
+            chordView.style.display = 'none';
+            metronomeView.style.display = 'none';
+            resourcesView.style.display = 'none'; 
+            songsView.style.display = 'none';
+
+            document.getElementById(viewId).style.display = 'block';
+        }
+
+        function getDisplayName(note) {
+            if (useSharps) {
+                return note;
+            }
+            return SHARP_TO_FLAT[note] || note;
+        }
+        
+        function alertUser(message, isError = false) {
+            // Use the dedicated message element on the access gate
+            const targetEl = accessMessageEl;
+
+            targetEl.textContent = message;
+            targetEl.className = isError ? 'text-red-400 mt-4 h-6' : 'text-primary-teal mt-4 h-6';
+            
+            setTimeout(() => {
+                targetEl.textContent = '';
+            }, 5000); // Increased timeout for error messages
+        }
+        
+        // --- CORE UTILITIES, METRONOME, AND RESOURCE LOGIC ---
+
+        // Utility for fetching with exponential backoff (for Gemini API calls)
+        async function backoffFetch(url, options, retries = 5, delay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        if (response.status === 429 || response.status >= 500) {
+                            console.warn(`Request failed with status ${response.status}. Retrying in ${delay / 1000}s...`);
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            delay *= 2; // Exponential backoff
+                            continue;
+                        } else {
+                            throw new Error(`API Error: ${response.status} - ${response.statusText}`);
+                        }
+                    }
+                    return response;
+                } catch (error) {
+                    if (i === retries - 1) {
+                        throw new Error(`Fetch failed after ${retries} attempts: ${error.message}`);
+                    }
+                    console.warn(`Fetch attempt failed: ${error.message}. Retrying in ${delay / 1000}s...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2; // Exponential backoff
                 }
             }
+        }
 
 
-            // --- 3. DOM ELEMENT REFERENCES ---
-            // Navigation
-            const viewSelector = document.getElementById('view-selector');
-            const chordView = document.getElementById('chord-view');
-            const metronomeView = document.getElementById('metronome-view');
-            const resourcesView = document.getElementById('resources-view'); 
-            const songsView = document.getElementById('songs-view');
+        // --- METRONOME IMPLEMENTATION ---
+        
+        function updateBPM(bpmValue) {
+            const bpm = parseInt(bpmValue, 10);
+            if (isNaN(bpm) || bpm < 40 || bpm > 240) return;
             
-            // Chord Elements
-            const rootSelect = document.getElementById('root-note');
-            const typeSelect = document.getElementById('chord-type');
-            const inversionSelect = document.getElementById('inversion');
-            const baseOctaveSelect = document.getElementById('base-octave');
-            const playModeSelect = document.getElementById('play-mode');
-            const chordNameEl = document.getElementById('chord-name');
-            const chordNotesEl = document.getElementById('chord-notes');
-            const pianoContainer = document.getElementById('piano-keyboard');
-            const downloadBtn = document.getElementById('download-btn');
-            const playBtn = document.getElementById('play-btn');
-            const stopBtn = document.getElementById('stop-btn');
-            const sharpsBtn = document.getElementById('sharps-btn');
-            const flatsBtn = document.getElementById('flats-btn');
-            
-            // Metronome Elements
-            const bpmInput = document.getElementById('bpm-input-metro');
-            const bpmSlider = document.getElementById('bpm-slider-metro');
-            const metroStartBtn = document.getElementById('metro-start-btn');
-            const metroStopBtn = document.getElementById('metro-stop-btn');
-            const metronomeIndicator = document.getElementById('metronome-indicator');
-            const metroToneSelect = document.getElementById('metro-tone-select'); 
-            
-            // Resource Elements
-            const resourceQueryInput = document.getElementById('resource-query-input');
-            const resourceGenerateBtn = document.getElementById('resource-generate-btn');
-            const initialMessageEl = document.getElementById('initial-message');
-            const resourceLoadingEl = document.getElementById('resource-loading');
-            const resourceContentEl = document.getElementById('resource-content');
-            
-            // Song Elements
-            const songsListEl = document.getElementById('songs-list');
+            bpmInput.value = bpm;
+            bpmSlider.value = bpm;
+            Tone.Transport.bpm.value = bpm;
+        }
 
-
-            // --- 4. CORE UTILITIES ---
-
-            function switchView(viewId) {
-                // Ensure audio context is running when any interactive view is shown
-                if (Tone.context.state !== 'running') { Tone.start(); }
-
-                // Stop any ongoing metronome when changing views unless switching to metronome view
-                if (viewId !== 'metronome-view') {
-                    stopMetronome();
+        function setMetronomeTone(tone) {
+            currentMetroTone = tone;
+            if (metronomeSynth) {
+                if (currentMetroTone === 'membrane') {
+                    // Use a separate synth for the drum sound
+                    metronomeSynth.disconnect();
+                    if (membraneSynth) membraneSynth.toDestination();
+                } else {
+                    // Use the main synth for pitched tones
+                    metronomeSynth.oscillator.type = currentMetroTone;
+                    if (metronomeSynth) metronomeSynth.toDestination();
+                    if (membraneSynth) membraneSynth.disconnect();
                 }
-                // Always stop any playing chord
-                stopChord();
-
-                chordView.style.display = 'none';
-                metronomeView.style.display = 'none';
-                resourcesView.style.display = 'none'; 
-                songsView.style.display = 'none';
-
-                document.getElementById(viewId).style.display = 'block';
             }
+        }
+        
+        function startMetronome() {
+            if (Tone.context.state !== 'running') { Tone.start(); }
+            if (metronomeLoop) return; 
 
-            // Converts the internal sharp note (e.g., 'C#') to the display name ('C#' or 'Db')
-            function getDisplayName(note) {
-                if (useSharps) {
-                    return note;
-                }
-                return SHARP_TO_FLAT[note] || note;
-            }
+            setMetronomeTone(metroToneSelect.value);
+
+            let beat = 0;
+            const clickInterval = "4n"; 
             
-            // Displays a non-intrusive message to the user (instead of window.alert)
-            function alertUser(message, isError = false) {
-                const outputCard = document.getElementById('resource-output-card') || document.getElementById('chord-view');
-                const existingAlert = document.getElementById('temp-alert');
-                if (existingAlert) existingAlert.remove();
+            const highlightDuration = Tone.Time("16n").toMilliseconds(); 
+
+            metronomeLoop = new Tone.Loop(time => {
+                const note = (beat % 4 === 0) ? "C5" : "C4"; 
+                const velocity = (beat % 4 === 0) ? 0.9 : 0.6;
                 
-                const alertDiv = document.createElement('div');
-                alertDiv.id = 'temp-alert';
-                const bgColor = isError ? 'bg-red-600' : 'bg-green-600';
+                if (currentMetroTone === 'membrane') {
+                    if (membraneSynth) membraneSynth.triggerAttackRelease(note, "32n", time, velocity);
+                } else {
+                    if (metronomeSynth) metronomeSynth.triggerAttackRelease(note, "32n", time, velocity);
+                }
                 
-                alertDiv.className = 'absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center rounded-xl z-20 transition-opacity duration-300';
-                alertDiv.innerHTML = `<div class="${bgColor} text-white p-4 rounded-lg shadow-2xl font-bold text-center text-xl transform scale-100 transition-transform duration-300">
-                                          ${message}
-                                      </div>`;
-                outputCard.style.position = 'relative'; 
-                outputCard.appendChild(alertDiv);
-
+                metronomeIndicator.classList.add('metronome-active');
                 setTimeout(() => {
-                    alertDiv.remove();
-                }, 3000); 
-            }
-
-            // --- 5. CHORD/KEYBOARD LOGIC ---
-
-            function downloadDiagram() {
-                const targetElement = document.getElementById('piano-keyboard');
-                if (!targetElement) {
-                    alertUser("Error: Piano diagram element not found.", true);
-                    return;
-                }
-
-                const originalText = downloadBtn.textContent;
-                downloadBtn.textContent = 'Preparing...';
-                downloadBtn.disabled = true;
-
-                // Use html2canvas to render the target element
-                html2canvas(targetElement, {
-                    allowTaint: true, 
-                    useCORS: true,
-                    backgroundColor: '#1f2937', 
-                    scale: 2, 
-                    logging: false,
-                }).then(canvas => {
-                    // Create a data URL from the canvas
-                    const imageURL = canvas.toDataURL('image/png');
-                    
-                    // Create a temporary link element for downloading
-                    const link = document.createElement('a');
-                    link.href = imageURL;
-                    
-                    const root = rootSelect.value;
-                    const type = typeSelect.value;
-                    const displayName = getDisplayName(root);
-                    
-                    // Filename
-                    link.download = `${displayName}-${type}-Diagram.png`;
-                    
-                    // Append to body, click it, and remove it immediately
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    alertUser("Diagram downloaded successfully!", false);
-
-                    // Reset button state
-                    downloadBtn.textContent = originalText;
-                    downloadBtn.disabled = false;
-                }).catch(error => {
-                    console.error("Download failed:", error);
-                    alertUser("Image download failed. See console for details.", true);
-                    downloadBtn.textContent = originalText;
-                    downloadBtn.disabled = false;
-                });
-            }
-
-            function populateInitialSelectors() {
-                // 1. Populate Root Notes (Uses current 'useSharps' state)
-                rootSelect.innerHTML = '';
-                NOTES.forEach(note => {
-                    const option = document.createElement('option');
-                    option.value = note; // Internal value is always sharp/natural
-                    option.textContent = getDisplayName(note); // Display name reflects sharps/flats
-                    rootSelect.appendChild(option);
-                });
-                rootSelect.value = 'C'; // Default to C
-
-                // 2. Populate Chord Types (Always the same)
-                typeSelect.innerHTML = '';
-                Object.keys(CHORD_FORMULAS).forEach(type => {
-                    const option = document.createElement('option');
-                    option.value = type;
-                    option.textContent = type;
-                    typeSelect.appendChild(option);
-                });
-                typeSelect.value = 'Major'; // Default to Major
+                    metronomeIndicator.classList.remove('metronome-active');
+                }, highlightDuration);
                 
-                // 3. Populate Inversions (Uses default 'Major')
+                beat++;
+            }, clickInterval).start(0);
+
+            Tone.Transport.start();
+            metroStartBtn.disabled = true;
+            metroStopBtn.disabled = false;
+            metroStartBtn.classList.add('opacity-50');
+            metroStopBtn.classList.remove('opacity-50');
+        }
+
+        function stopMetronome() {
+            if (metronomeLoop) {
+                Tone.Transport.clear(metronomeLoop.id);
+                metronomeLoop = null;
+            }
+            if (arpeggiator === null) {
+                Tone.Transport.stop();
+            }
+            metronomeIndicator.classList.remove('metronome-active');
+            metroStartBtn.disabled = false;
+            metroStopBtn.disabled = true;
+            metroStartBtn.classList.remove('opacity-50');
+            metroStopBtn.classList.add('opacity-50');
+        }
+
+
+        // --- RESOURCE GENERATOR IMPLEMENTATION ---
+
+        function renderResourceOutput(text, sources) {
+            resourceContentEl.innerHTML = '';
+            
+            const textDiv = document.createElement('div');
+            textDiv.className = 'prose max-w-none text-gray-100';
+            textDiv.innerHTML = text; 
+            resourceContentEl.appendChild(textDiv);
+
+            if (sources && sources.length > 0) {
+                const sourcesContainer = document.createElement('div');
+                sourcesContainer.className = 'mt-6 pt-4 border-t border-gray-600';
+                
+                const sourceTitle = document.createElement('h3');
+                sourceTitle.className = 'text-lg font-semibold text-accent-yellow mb-2';
+                sourceTitle.textContent = 'Sources Used:';
+                sourcesContainer.appendChild(sourceTitle);
+                
+                const sourceList = document.createElement('ul');
+                sourceList.className = 'list-disc list-inside space-y-1 text-sm text-gray-400';
+                
+                sources.forEach((source, index) => {
+                    if (source.uri && source.title) {
+                        const listItem = document.createElement('li');
+                        const link = document.createElement('a');
+                        link.href = source.uri;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        link.className = 'text-primary-teal hover:text-teal-400 transition-colors underline';
+                        link.textContent = source.title;
+                        
+                        listItem.textContent = `[${index + 1}] `;
+                        listItem.appendChild(link);
+                        sourceList.appendChild(listItem);
+                    }
+                });
+                
+                sourcesContainer.appendChild(sourceList);
+                resourceContentEl.appendChild(sourcesContainer);
+            }
+            
+            initialMessageEl.style.display = 'none';
+            resourceContentEl.classList.remove('hidden');
+        }
+
+        async function generateResourceContent() {
+            const userQuery = resourceQueryInput.value.trim();
+            if (!userQuery) {
+                alertUser("Please enter a question for the music resource generator.", true);
+                return;
+            }
+            
+            resourceGenerateBtn.disabled = true;
+            resourceGenerateBtn.textContent = 'Generating...';
+            resourceLoadingEl.style.display = 'flex';
+            resourceContentEl.classList.add('hidden');
+            initialMessageEl.style.display = 'none';
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                tools: [{ "google_search": {} }], 
+                systemInstruction: {
+                    parts: [{ text: SYSTEM_PROMPT }]
+                },
+            };
+
+            const options = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            };
+
+            try {
+                const response = await backoffFetch(API_URL, options);
+                const result = await response.json();
+                
+                const candidate = result.candidates?.[0];
+                let generatedText = "Sorry, I couldn't generate a coherent response.";
+                let sources = [];
+
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    generatedText = candidate.content.parts[0].text;
+                    
+                    const groundingMetadata = candidate.groundingMetadata;
+                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                        sources = groundingMetadata.groundingAttributions
+                            .map(attribution => ({
+                                uri: attribution.web?.uri,
+                                title: attribution.web?.title,
+                            }))
+                            .filter(source => source.uri && source.title);
+                    }
+                }
+                
+                renderResourceOutput(generatedText, sources);
+
+            } catch (error) {
+                console.error("Gemini API call failed:", error);
+                renderResourceOutput(`**Error generating resource:** The API request failed. Please try a different query or check your connection. Details: ${error.message}`, []);
+            } finally {
+                resourceGenerateBtn.disabled = false;
+                resourceGenerateBtn.textContent = 'Generate Resource';
+                resourceLoadingEl.style.display = 'none';
+            }
+        }
+
+        // --- 5. CHORD/KEYBOARD LOGIC ---
+        
+        function populateInitialSelectors() {
+            rootSelect.innerHTML = '';
+            NOTES.forEach(note => {
+                const option = document.createElement('option');
+                option.value = note; 
+                option.textContent = getDisplayName(note); 
+                rootSelect.appendChild(option);
+            });
+            rootSelect.value = 'C'; 
+
+            typeSelect.innerHTML = '';
+            Object.keys(CHORD_FORMULAS).forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                typeSelect.appendChild(option);
+            });
+            typeSelect.value = 'Major'; 
+            
+            updateInversionOptions(); 
+        }
+        
+        function updateRootNoteNames() {
+            const currentRootValue = rootSelect.value;
+            rootSelect.innerHTML = ''; 
+            
+            NOTES.forEach(note => {
+                const option = document.createElement('option');
+                option.value = note; 
+                option.textContent = getDisplayName(note); 
+                rootSelect.appendChild(option);
+            });
+            
+            rootSelect.value = currentRootValue;
+        }
+
+        function updateInversionOptions() {
+            const currentType = typeSelect.value;
+            const formulaLength = CHORD_FORMULAS[currentType].length;
+            let currentInversion = parseInt(inversionSelect.value, 10);
+            
+            if (isNaN(currentInversion) || currentInversion < 0 || currentInversion >= formulaLength) {
+                currentInversion = 0; 
+            }
+
+            inversionSelect.innerHTML = '';
+            for (let i = 0; i < formulaLength; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                let text = i === 0 ? "Root Position" : `${i}st/nd/rd/th Inversion`; // Simplified for display
+                if (i === 1) text = "1st Inversion";
+                if (i === 2) text = "2nd Inversion";
+                if (i === 3) text = "3rd Inversion";
+                if (i > 3) text = `${i}th Inversion`;
+                option.textContent = text;
+                inversionSelect.appendChild(option);
+            }
+            inversionSelect.value = currentInversion.toString();
+        }
+
+        function drawPiano() {
+            pianoContainer.innerHTML = ''; 
+            
+            for (let i = 0; i < NUM_OCTAVES; i++) {
+                WHITE_NOTES_OCTAVE.forEach(noteName => {
+                    const octave = START_OCTAVE + i;
+                    
+                    const whiteKey = document.createElement('div');
+                    whiteKey.className = 'key white';
+                    whiteKey.dataset.note = noteName;
+                    whiteKey.dataset.octave = octave;
+                    
+                    const blackKey = document.createElement('div');
+                    blackKey.className = 'key black';
+                    const blackNoteIndex = (NOTES.indexOf(noteName) + 1) % 12;
+                    const blackNoteName = NOTES[blackNoteIndex];
+                    blackKey.dataset.note = blackNoteName;
+                    blackKey.dataset.octave = octave;
+
+                    const blackLabel = document.createElement('div');
+                    blackLabel.className = 'key-label black-label';
+                    blackKey.appendChild(blackLabel); 
+
+                    whiteKey.appendChild(blackKey);
+
+                    const whiteLabel = document.createElement('div');
+                    whiteLabel.className = 'key-label white-label';
+                    whiteKey.appendChild(whiteLabel); 
+
+                    pianoContainer.appendChild(whiteKey);
+                });
+            }
+            
+            const finalCOctave = START_OCTAVE + NUM_OCTAVES;
+            const finalCKey = document.createElement('div');
+            finalCKey.className = 'key white';
+            finalCKey.dataset.note = 'C';
+            finalCKey.dataset.octave = finalCOctave;
+            const finalWhiteLabel = document.createElement('div');
+            finalWhiteLabel.className = 'key-label white-label';
+            finalCKey.appendChild(finalWhiteLabel);
+            pianoContainer.appendChild(finalCKey);
+            
+            document.querySelectorAll('.key').forEach(key => {
+                const pressHandler = (e) => {
+                    e.preventDefault(); 
+                    if (Tone.context.state !== 'running') { Tone.start(); }
+                    const noteName = key.dataset.note;
+                    const octave = key.dataset.octave;
+                    
+                    if (synth) {
+                       synth.triggerAttackRelease(`${noteName}${octave}`, "8n");
+                    }
+                    
+                    key.classList.add('pressed');
+                };
+
+                const releaseHandler = (e) => {
+                    e.preventDefault();
+                    key.classList.remove('pressed');
+                };
+
+                key.addEventListener('mousedown', pressHandler);
+                key.addEventListener('mouseup', releaseHandler);
+                key.addEventListener('touchstart', pressHandler);
+                key.addEventListener('touchend', releaseHandler);
+                key.addEventListener('mouseleave', releaseHandler); 
+            });
+        }
+
+        function getChordNotes(rootNote, formula) {
+            if (!Array.isArray(formula) || formula.length === 0) { return []; }
+
+            const rootIndex = NOTES.indexOf(rootNote);
+            const baseOctave = parseInt(baseOctaveSelect.value, 10); 
+            
+            const notes = formula.map(interval => {
+                const noteIndex = (rootIndex + interval) % 12;
+                const octaveOffset = Math.floor((rootIndex + interval) / 12);
+                return {
+                    name: NOTES[noteIndex],
+                    octaveOffset: octaveOffset
+                };
+            });
+
+            const inversion = parseInt(inversionSelect.value, 10);
+            let invertedNotes = [...notes];
+
+            for (let i = 0; i < inversion; i++) {
+                const firstNote = invertedNotes.shift();
+                firstNote.octaveOffset += 1; 
+                invertedNotes.push(firstNote);
+            }
+
+            const notesWithOctave = invertedNotes.map(n => ({
+                name: n.name,
+                octave: baseOctave + n.octaveOffset,
+                displayName: getDisplayName(n.name),
+                midiName: `${n.name}${baseOctave + n.octaveOffset}`
+            }));
+            
+            return notesWithOctave;
+        }
+        
+        function stopChord() {
+            if (synth) {
+                synth.releaseAll();
+            }
+            if (arpeggiator) {
+                Tone.Transport.clear(arpeggiator.id);
+                arpeggiator = null; 
+                
+                if (!metronomeLoop) {
+                    Tone.Transport.stop(); 
+                }
+            }
+            playBtn.textContent = 'Play Chord';
+            playBtn.disabled = false;
+            playBtn.classList.remove('bg-gray-500', 'cursor-not-allowed');
+            playBtn.classList.add('bg-secondary-pink', 'hover:bg-pink-600');
+        }
+
+        function playChord() {
+            if (!synth) { return; }
+            
+            stopChord(); 
+            
+            if (Tone.context.state !== 'running') { Tone.start(); }
+            
+            const notesData = getChordNotes(rootSelect.value, CHORD_FORMULAS[typeSelect.value]);
+            const notesToPlay = notesData.map(n => n.midiName);
+
+            if (notesToPlay.length === 0) return;
+
+            const mode = playModeSelect.value;
+            playBtn.textContent = 'Playing...';
+            playBtn.disabled = true;
+            playBtn.classList.remove('bg-secondary-pink', 'hover:bg-pink-600');
+            playBtn.classList.add('bg-gray-500', 'cursor-not-allowed');
+
+
+            if (mode === 'simultaneous') {
+                synth.triggerAttack(notesToPlay);
+                
+                Tone.Transport.scheduleOnce(() => {
+                    stopChord();
+                }, Tone.now() + 2.0);
+                
+            } else if (mode === 'arpeggiated') {
+                arpeggiator = new Tone.Sequence((time, note) => {
+                    synth.triggerAttackRelease(note, "8n", time);
+                }, notesToPlay, "8n").start(0);
+
+                if (!metronomeLoop) {
+                    Tone.Transport.loop = true;
+                    Tone.Transport.loopStart = 0;
+                    const sequenceDuration = notesToPlay.length * Tone.Time("8n").toSeconds();
+                    Tone.Transport.loopEnd = sequenceDuration;
+                
+                    Tone.Transport.start();
+                } else {
+                    Tone.Transport.start();
+                }
+            }
+        }
+
+        function updateKeyLabels() {
+            document.querySelectorAll('.key').forEach(key => {
+                const octave = key.dataset.octave;
+                const noteName = key.dataset.note;
+                const isBlackKey = key.classList.contains('black');
+                
+                const labelEl = isBlackKey 
+                    ? key.querySelector('.black-label') 
+                    : key.querySelector('.white-label');
+
+                if (labelEl) {
+                    labelEl.textContent = `${getDisplayName(noteName)}${octave}`;
+                }
+            });
+        }
+
+        function highlightPiano(notesData) {
+            document.querySelectorAll('.key.highlighted').forEach(key => {
+                key.classList.remove('highlighted');
+            });
+
+            notesData.forEach(note => {
+                const selector = `.key[data-note="${note.name}"][data-octave="${note.octave}"]`;
+                document.querySelectorAll(selector).forEach(key => {
+                    key.classList.add('highlighted');
+                });
+            });
+        }
+        
+        function updateChordInfo(notesData) {
+            const rootNote = rootSelect.value;
+            const chordType = typeSelect.value;
+            const inversion = inversionSelect.value;
+
+            const inversionText = ["Root Position", "1st Inversion", "2nd Inversion", "3rd Inversion", "4th Inversion", "5th Inversion"][inversion] || "Inversion Error";
+
+            chordNameEl.textContent = `${getDisplayName(rootNote)} ${chordType} (${inversionText})`;
+            chordNotesEl.textContent = notesData.map(n => `${n.displayName}${n.octave}`).join(' - ');
+        }
+        
+        function refreshChordDisplay() {
+            stopChord(); 
+            updateKeyLabels();
+            const rootNote = rootSelect.value;
+            const chordType = typeSelect.value;
+            const formula = CHORD_FORMULAS[chordType];
+            const notesData = getChordNotes(rootNote, formula);
+            updateChordInfo(notesData);
+            highlightPiano(notesData);
+        }
+
+        
+        function renderSongsView() {
+            songsListEl.innerHTML = '';
+            
+            SIMPLE_SONGS.forEach(song => {
+                const chordChipsHtml = song.progression.map(fullChord => {
+                    const parts = fullChord.split(' ');
+                    const rootNote = parts[0];
+                    const chordType = parts.length > 1 ? parts.slice(1).join(' ') : 'Major'; 
+                    
+                    return `<span class="chord-chip bg-primary-teal/20 text-primary-teal px-3 py-1 rounded-full text-sm font-semibold cursor-pointer hover:bg-primary-teal/40 transition-colors mr-2 mb-2 inline-block" data-root="${rootNote}" data-type="${chordType}">${fullChord}</span>`;
+                }).join('');
+
+                const songCard = document.createElement('div');
+                songCard.className = 'bg-gray-700 p-5 rounded-xl shadow-lg border-l-4 border-secondary-pink';
+                songCard.innerHTML = `
+                    <h3 class="text-2xl font-bold text-white mb-1">${song.title} <span class="text-sm font-normal text-gray-400">by ${song.artist}</span></h3>
+                    <p class="text-sm text-gray-400 mb-3">Key: <span class="text-accent-yellow font-semibold">${song.key}</span></p>
+                    <div class="flex flex-wrap items-center">
+                        <span class="text-gray-300 font-medium mr-2">Progression:</span>
+                        ${chordChipsHtml}
+                    </div>
+                `;
+                songsListEl.appendChild(songCard);
+            });
+            
+            document.querySelectorAll('.chord-chip').forEach(chip => {
+                chip.addEventListener('click', (e) => {
+                    const rootNote = e.target.dataset.root;
+                    const chordType = e.target.dataset.type;
+                    
+                    setChordSelectors(rootNote, chordType);
+                    
+                    viewSelector.value = 'chord-view';
+                    switchView('chord-view');
+                    refreshChordDisplay(); 
+                });
+            });
+        }
+        
+        function setChordSelectors(root, type) {
+            const isFlatRoot = Object.keys(FLAT_TO_SHARP).includes(root);
+            
+            if (isFlatRoot) {
+                if (useSharps) flatsBtn.click();
+                rootSelect.value = FLAT_TO_SHARP[root];
+            } else if (root.includes('#')) {
+                if (!useSharps) sharpsBtn.click();
+                rootSelect.value = root;
+            } else {
+                if (!useSharps) sharpsBtn.click();
+                rootSelect.value = root;
+            }
+            
+            const typeKey = Object.keys(CHORD_FORMULAS).find(key => key.toLowerCase() === type.toLowerCase());
+            if (typeKey) {
+                typeSelect.value = typeKey;
+                updateInversionOptions(); 
+            } else {
+                typeSelect.value = 'Major';
                 updateInversionOptions(); 
             }
             
-            function updateRootNoteNames() {
-                // Keep the same internal value, but update the text content of the options
-                const currentRootValue = rootSelect.value;
-                rootSelect.innerHTML = ''; // Clear to rebuild with new display names
-                
-                NOTES.forEach(note => {
-                    const option = document.createElement('option');
-                    option.value = note; 
-                    option.textContent = getDisplayName(note); 
-                    rootSelect.appendChild(option);
-                });
-                
-                // Re-select the previously selected *internal* root note value
-                rootSelect.value = currentRootValue;
-            }
+            inversionSelect.value = '0';
+        }
 
-            function updateInversionOptions() {
-                const currentType = typeSelect.value;
-                const formulaLength = CHORD_FORMULAS[currentType].length;
-                let currentInversion = parseInt(inversionSelect.value, 10);
-                
-                // Clamp the current inversion if it's too high for the new chord type
-                if (isNaN(currentInversion) || currentInversion < 0 || currentInversion >= formulaLength) {
-                    currentInversion = 0; 
-                }
 
-                inversionSelect.innerHTML = '';
-                for (let i = 0; i < formulaLength; i++) {
-                    const option = document.createElement('option');
-                    option.value = i;
-                    let text = "Root Position";
-                    if (i === 1) text = "1st Inversion";
-                    if (i === 2) text = "2nd Inversion";
-                    if (i === 3) text = "3rd Inversion";
-                    if (i === 4) text = "4th Inversion";
-                    if (i === 5) text = "5th Inversion";
-                    option.textContent = text;
-                    inversionSelect.appendChild(option);
-                }
-                // Set back to the clamped/original inversion
-                inversionSelect.value = currentInversion.toString();
-            }
+        // --- 9. FIREBASE AUTHENTICATION & GATING SETUP ---
+        
+        function initFirebaseEnvironment() {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('Debug'); 
 
-            function drawPiano() {
-                pianoContainer.innerHTML = ''; 
-                
-                for (let i = 0; i < NUM_OCTAVES; i++) {
-                    WHITE_NOTES_OCTAVE.forEach(noteName => {
-                        const octave = START_OCTAVE + i;
-                        
-                        const whiteKey = document.createElement('div');
-                        whiteKey.className = 'key white';
-                        whiteKey.dataset.note = noteName;
-                        whiteKey.dataset.octave = octave;
-                        
-                        // Black Key (Child of White Key)
-                        const blackKey = document.createElement('div');
-                        blackKey.className = 'key black';
-                        // Get the sharp note for the black key (e.g., C#)
-                        const blackNoteIndex = (NOTES.indexOf(noteName) + 1) % 12;
-                        const blackNoteName = NOTES[blackNoteIndex];
-                        blackKey.dataset.note = blackNoteName;
-                        blackKey.dataset.octave = octave;
-
-                        const blackLabel = document.createElement('div');
-                        blackLabel.className = 'key-label black-label';
-                        blackKey.appendChild(blackLabel); // Label content updated in updateKeyLabels
-
-                        whiteKey.appendChild(blackKey);
-
-                        const whiteLabel = document.createElement('div');
-                        whiteLabel.className = 'key-label white-label';
-                        whiteKey.appendChild(whiteLabel); // Label content updated in updateKeyLabels
-
-                        pianoContainer.appendChild(whiteKey);
+                setPersistence(auth, browserSessionPersistence)
+                    .catch((error) => {
+                        console.error("Failed to set auth persistence:", error);
                     });
-                }
                 
-                // Add the final C note (C6)
-                const finalCOctave = START_OCTAVE + NUM_OCTAVES;
-                const finalCKey = document.createElement('div');
-                finalCKey.className = 'key white';
-                finalCKey.dataset.note = 'C';
-                finalCKey.dataset.octave = finalCOctave;
-                const finalWhiteLabel = document.createElement('div');
-                finalWhiteLabel.className = 'key-label white-label';
-                finalCKey.appendChild(finalWhiteLabel);
-                pianoContainer.appendChild(finalCKey);
-                
-                // Add key interaction handlers
-                document.querySelectorAll('.key').forEach(key => {
-                    const pressHandler = (e) => {
-                        e.preventDefault(); 
-                        if (Tone.context.state !== 'running') { Tone.start(); }
-                        const noteName = key.dataset.note;
-                        const octave = key.dataset.octave;
-                        
-                        if (synth) {
-                           synth.triggerAttackRelease(`${noteName}${octave}`, "8n");
-                        }
-                        
-                        // Add visual press feedback
-                        key.classList.add('pressed');
-                    };
-
-                    const releaseHandler = (e) => {
-                        e.preventDefault();
-                        // Remove visual press feedback
-                        key.classList.remove('pressed');
-                    };
-
-                    // Use both mouse and touch events for full compatibility
-                    key.addEventListener('mousedown', pressHandler);
-                    key.addEventListener('mouseup', releaseHandler);
-                    key.addEventListener('touchstart', pressHandler);
-                    key.addEventListener('touchend', releaseHandler);
-                    key.addEventListener('mouseleave', releaseHandler); // Safety release
-                });
-            }
-
-            function getChordNotes(rootNote, formula) {
-                if (!Array.isArray(formula) || formula.length === 0) {
-                     return [];
-                }
-
-                const rootIndex = NOTES.indexOf(rootNote);
-                // Base Octave is now 4 by default from the HTML, but read from the selector
-                const baseOctave = parseInt(baseOctaveSelect.value, 10); 
-                
-                const notes = formula.map(interval => {
-                    const noteIndex = (rootIndex + interval) % 12;
-                    // Handle octave rollover for the interval (e.g., C to D9)
-                    const octaveOffset = Math.floor((rootIndex + interval) / 12);
-                    return {
-                        name: NOTES[noteIndex],
-                        octaveOffset: octaveOffset
-                    };
-                });
-
-                const inversion = parseInt(inversionSelect.value, 10);
-                let invertedNotes = [...notes];
-
-                // Perform the inversion by moving the lowest note up one octave
-                for (let i = 0; i < inversion; i++) {
-                    const firstNote = invertedNotes.shift();
-                    // Move the first note up one octave
-                    firstNote.octaveOffset += 1; 
-                    invertedNotes.push(firstNote);
-                }
-
-                // Finalize MIDI names with the correct base octave
-                const notesWithOctave = invertedNotes.map(n => ({
-                    name: n.name,
-                    octave: baseOctave + n.octaveOffset,
-                    displayName: getDisplayName(n.name),
-                    midiName: `${n.name}${baseOctave + n.octaveOffset}`
-                }));
-                
-                return notesWithOctave;
-            }
-            
-            function stopChord() {
-                if (synth) {
-                    synth.releaseAll();
-                }
-                if (arpeggiator) {
-                    Tone.Transport.clear(arpeggiator.id);
-                    arpeggiator = null; 
-                    
-                    // Stop transport only if metronome is NOT running
-                    if (!metronomeLoop) {
-                        Tone.Transport.stop(); 
-                    }
-                }
-                // Reset button state
-                playBtn.textContent = 'Play Chord';
-                playBtn.disabled = false;
-                playBtn.classList.remove('bg-gray-500', 'cursor-not-allowed');
-                playBtn.classList.add('bg-secondary-pink', 'hover:bg-pink-600');
-            }
-
-            function playChord() {
-                if (!synth) {
-                    alertUser("Synth not initialized. Please refresh.", true);
-                    return;
-                }
-                
-                stopChord(); // Stop any currently playing chord or arpeggio
-                
-                if (Tone.context.state !== 'running') { Tone.start(); }
-                
-                const notesData = getChordNotes(rootSelect.value, CHORD_FORMULAS[typeSelect.value]);
-                const notesToPlay = notesData.map(n => n.midiName);
-
-                if (notesToPlay.length === 0) return;
-
-                const mode = playModeSelect.value;
-                playBtn.textContent = 'Playing...';
-                playBtn.disabled = true;
-                playBtn.classList.remove('bg-secondary-pink', 'hover:bg-pink-600');
-                playBtn.classList.add('bg-gray-500', 'cursor-not-allowed');
-
-
-                if (mode === 'simultaneous') {
-                    // Play all notes at the same time
-                    synth.triggerAttack(notesToPlay);
-                    
-                    // Schedule a release after 2.0 seconds
-                    Tone.Transport.scheduleOnce(() => {
-                        stopChord();
-                    }, Tone.now() + 2.0);
-                    
-                } else if (mode === 'arpeggiated') {
-                    // Use a sequence for arpeggiation
-                    arpeggiator = new Tone.Sequence((time, note) => {
-                        synth.triggerAttackRelease(note, "8n", time);
-                    }, notesToPlay, "8n").start(0);
-
-                    // If metronome is running, don't change loop properties
-                    if (!metronomeLoop) {
-                        Tone.Transport.loop = true;
-                        Tone.Transport.loopStart = 0;
-                        const sequenceDuration = notesToPlay.length * Tone.Time("8n").toSeconds();
-                        Tone.Transport.loopEnd = sequenceDuration;
-                    
-                        Tone.Transport.start();
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        userStatusEl.innerHTML = `Signed in as <span class="font-bold text-primary-teal">${userId}</span>`;
+                        signOutBtn.style.display = 'flex';
                     } else {
-                        // If metronome is running, just start the sequence without looping the transport
-                        Tone.Transport.start();
-                    }
-                    
-                    // The arpeggiator will continue until stopped, so we don't schedule a global stop
-                }
-            }
+                        userId = null;
+                        userStatusEl.textContent = "Status: Signed out";
+                        signOutBtn.style.display = 'none';
 
-            function updateKeyLabels() {
-                // Update key labels based on current accidental mode
-                document.querySelectorAll('.key').forEach(key => {
-                    const octave = key.dataset.octave;
-                    const noteName = key.dataset.note;
-                    const isBlackKey = key.classList.contains('black');
-                    
-                    // Find the correct label element
-                    const labelEl = isBlackKey 
-                        ? key.querySelector('.black-label') 
-                        : key.querySelector('.white-label');
-
-                    if (labelEl) {
-                        labelEl.textContent = `${getDisplayName(noteName)}${octave}`;
-                    }
-                });
-            }
-
-            function highlightPiano(notesData) {
-                // Clear all highlights
-                document.querySelectorAll('.key.highlighted').forEach(key => {
-                    key.classList.remove('highlighted');
-                });
-
-                // Highlight the notes
-                notesData.forEach(note => {
-                    // Find keys matching the note name (which is always sharp/natural) and octave
-                    const selector = `.key[data-note="${note.name}"][data-octave="${note.octave}"]`;
-                    document.querySelectorAll(selector).forEach(key => {
-                        key.classList.add('highlighted');
-                    });
-                });
-            }
-            
-            function updateChordInfo(notesData) {
-                const rootNote = rootSelect.value;
-                const chordType = typeSelect.value;
-                const inversion = inversionSelect.value;
-
-                const inversionText = ["Root Position", "1st Inversion", "2nd Inversion", "3rd Inversion", "4th Inversion", "5th Inversion"][inversion] || "Error";
-
-                chordNameEl.textContent = `${getDisplayName(rootNote)} ${chordType} (${inversionText})`;
-                chordNotesEl.textContent = notesData.map(n => `${n.displayName}${n.octave}`).join(' - ');
-            }
-            
-            // New function for general chord logic
-            function refreshChordDisplay() {
-                stopChord(); // Always stop playback when parameters change
-                
-                // 1. Ensure labels are up-to-date (in case accidental mode changed implicitly)
-                updateKeyLabels();
-
-                // 2. Calculate the new chord
-                const rootNote = rootSelect.value;
-                const chordType = typeSelect.value;
-                const formula = CHORD_FORMULAS[chordType];
-                
-                const notesData = getChordNotes(rootNote, formula);
-
-                // 3. Update UI based on new chord
-                updateChordInfo(notesData);
-                highlightPiano(notesData);
-            }
-
-            // --- 6. METRONOME LOGIC ---
-            
-            function updateBPM(newBPM) {
-                newBPM = Math.max(40, Math.min(240, newBPM));
-                
-                if (Tone.Transport) {
-                    Tone.Transport.bpm.value = newBPM;
-                }
-                
-                bpmInput.value = newBPM;
-                bpmSlider.value = newBPM;
-            }
-            
-            function setMetronomeTone(newTone) {
-                currentMetroTone = newTone;
-                if (newTone !== 'membrane' && metronomeSynth) {
-                    metronomeSynth.oscillator.type = newTone;
-                }
-            }
-
-            function startMetronome() {
-                if (!audioContextReady) {
-                    alertUser("Audio engine not ready. Please try again.", true);
-                    return;
-                }
-                
-                // Stop any running arpeggiator but keep transport running
-                if (arpeggiator) {
-                    Tone.Transport.clear(arpeggiator.id);
-                    arpeggiator = null;
-                }
-                
-                if (Tone.context.state !== 'running') { Tone.start(); }
-                
-                if (metronomeLoop) return; // Already running
-
-                Tone.Transport.clear(); // Clear all schedules, including old metronome loops
-                Tone.Transport.loop = false; // Metronome should not loop the whole transport
-
-                // Setup the metronome click loop (subdivision is '4n' for quarter notes)
-                metronomeLoop = new Tone.Loop(time => {
-                    const isFirstBeat = (metronomeLoop.iterations % 4 === 0);
-                    const pitch = isFirstBeat ? "C5" : "C4"; // Higher pitch for beat 1
-                    const duration = "16n";
-
-                    if (currentMetroTone === 'membrane' && membraneSynth) {
-                        membraneSynth.triggerAttackRelease(pitch, duration, time);
-                    } else if (metronomeSynth) {
-                        metronomeSynth.oscillator.type = currentMetroTone; 
-                        metronomeSynth.triggerAttackRelease(pitch, duration, time);
-                    }
-                   
-                    // Visual feedback
-                    Tone.Draw.schedule(() => {
-                        metronomeIndicator.classList.add('metronome-active');
-                        setTimeout(() => {
-                            metronomeIndicator.classList.remove('metronome-active');
-                        }, 50); 
-                    }, time);
-
-                }, "4n"); 
-
-                metronomeLoop.start(0);
-                Tone.Transport.start();
-                
-                // Update UI state
-                metroStartBtn.disabled = true;
-                metroStopBtn.disabled = false;
-                metroStartBtn.classList.remove('bg-accent-yellow', 'hover:bg-yellow-600');
-                metroStartBtn.classList.add('bg-gray-500', 'text-gray-400', 'cursor-not-allowed');
-                metroStopBtn.classList.remove('bg-gray-600', 'text-white');
-                metroStopBtn.classList.add('bg-orange-500', 'hover:bg-orange-600', 'text-white');
-            }
-
-            function stopMetronome() {
-                if (!metronomeLoop) return; 
-                
-                Tone.Transport.stop(); // Stops transport and clears everything
-                metronomeLoop.dispose();
-                metronomeLoop = null;
-                Tone.Transport.clear(); 
-
-                metronomeIndicator.classList.remove('metronome-active');
-                
-                // Update UI state
-                metroStartBtn.disabled = false;
-                metroStopBtn.disabled = true;
-                metroStartBtn.classList.add('bg-accent-yellow', 'hover:bg-yellow-600');
-                metroStartBtn.classList.remove('bg-gray-500', 'text-gray-400', 'cursor-not-allowed');
-                metroStopBtn.classList.add('bg-gray-600', 'text-white');
-                metroStopBtn.classList.remove('bg-orange-500', 'hover:bg-orange-600');
-            }
-            
-            // --- 7. DYNAMIC RESOURCE GENERATION LOGIC ---
-            
-            async function generateResourceContent() {
-                const userQuery = resourceQueryInput.value.trim();
-                if (!userQuery) {
-                    alertUser("Please enter a question or topic to generate a resource.");
-                    return;
-                }
-                
-                resourceGenerateBtn.disabled = true;
-                resourceGenerateBtn.textContent = 'Generating...';
-                initialMessageEl.classList.add('hidden');
-                resourceContentEl.classList.add('hidden');
-                resourceLoadingEl.classList.remove('hidden');
-
-                const payload = {
-                    contents: [{ parts: [{ text: userQuery }] }],
-                    tools: [{ "google_search": {} }],
-                    systemInstruction: {
-                        parts: [{ text: SYSTEM_PROMPT }]
-                    },
-                };
-                
-                const maxRetries = 3;
-                let attempt = 0;
-                let responseData = null;
-
-                while (attempt < maxRetries) {
-                    try {
-                        const response = await fetch(API_URL, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
+                        // If the user was using the app and signs out, return to the gate
+                        if (!authenticatedContentEl.classList.contains('hidden')) {
+                             authenticatedContentEl.classList.add('hidden');
+                             appLoadingEl.style.display = 'none';
+                             accessGateEl.style.display = 'flex';
+                             alertUser("You have been signed out. Please re-enter the key.", false);
                         }
-
-                        responseData = await response.json();
-                        break; 
-                        
-                    } catch (error) {
-                        attempt++;
-                        console.warn(`API call failed (Attempt ${attempt}). Retrying...`, error);
-                        if (attempt >= maxRetries) {
-                            console.error('API call failed after max retries:', error);
-                            alertUser('Failed to connect to the resource generator. Please check your network.', true);
-                            break;
-                        }
-                        const delay = Math.pow(2, attempt) * 1000;
-                        await new Promise(resolve => setTimeout(resolve, delay));
                     }
-                }
-                
-                resourceLoadingEl.classList.add('hidden');
-                resourceGenerateBtn.disabled = false;
-                resourceGenerateBtn.textContent = 'Generate Resource';
-                
-                if (responseData) {
-                    renderResourceOutput(responseData);
-                }
-            }
-            
-            function renderResourceOutput(result) {
-                const candidate = result.candidates?.[0];
+                });
 
-                if (!candidate || !candidate.content?.parts?.[0]?.text) {
-                    initialMessageEl.textContent = 'Sorry, I couldn\'t find a resource for that topic. Please try rephrasing your question.';
-                    initialMessageEl.classList.remove('hidden');
-                    resourceContentEl.classList.add('hidden');
-                    return;
-                }
-
-                const text = candidate.content.parts[0].text;
-                let sourcesHtml = '';
-                
-                // 1. Extract and format grounding sources
-                const groundingMetadata = candidate.groundingMetadata;
-                if (groundingMetadata && groundingMetadata.groundingAttributions) {
-                    const sources = groundingMetadata.groundingAttributions
-                        .map(attribution => ({
-                            uri: attribution.web?.uri,
-                            title: attribution.web?.title,
-                        }))
-                        .filter(source => source.uri && source.title);
-
-                    if (sources.length > 0) {
-                        sourcesHtml = `<div class="mt-6 pt-4 border-t border-gray-600">
-                                            <p class="text-sm font-semibold text-gray-400 mb-2">Sources consulted:</p>
-                                            <ul class="list-disc list-inside space-y-1 text-xs text-gray-500">`;
-                        sources.forEach((source) => {
-                            const link = source.uri.startsWith('http') ? `<a href="${source.uri}" target="_blank" class="text-primary-teal hover:underline" title="${source.uri}">${source.title}</a>` : source.title;
-                            sourcesHtml += `<li>${link}</li>`;
-                        });
-                        sourcesHtml += `</ul></div>`;
+                signOutBtn.addEventListener('click', () => {
+                    if (auth.currentUser) {
+                        signOut(auth).catch(e => console.error("Sign out failed:", e));
                     }
+                });
+
+            } catch (e) {
+                console.error("Firebase initialization failed:", e);
+                accessMessageEl.textContent = "Error: Firebase failed to initialize.";
+                unlockBtn.disabled = true;
+            }
+        }
+
+        function initApp() {
+            // This function runs once the key is validated AND the user is successfully authenticated.
+            
+            // 1. Hide gate/loading, show content
+            accessGateEl.style.display = 'none';
+            appLoadingEl.style.display = 'none';
+            authenticatedContentEl.classList.remove('hidden');
+            
+            // 2. Complete core app init tasks
+            initTone();
+            populateInitialSelectors();
+            drawPiano();
+            renderSongsView();
+            stopMetronome(); 
+        }
+        
+        async function handleAccessGate() {
+            const enteredKey = accessKeyInput.value.trim();
+            
+            if (enteredKey === SECRET_ACCESS_KEY) {
+                accessMessageEl.textContent = "";
+                accessGateEl.style.display = 'none';
+                appLoadingEl.style.display = 'flex'; 
+                unlockBtn.disabled = true; 
+                accessKeyInput.value = ''; // Clear key immediately
+
+                // Define a timeout promise (10 seconds)
+                const timeout = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error("Authentication timed out after 10 seconds.")), 10000);
+                });
+
+                // Authentication Promise
+                const authPromise = (async () => {
+                    let userCredential;
+                    if (initialAuthToken) {
+                        userCredential = await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        userCredential = await signInAnonymously(auth);
+                    }
+                    if (userCredential && userCredential.user) {
+                        return userCredential;
+                    } else {
+                        throw new Error("Authentication failed: User object missing.");
+                    }
+                })();
+                
+                try {
+                    // Race the authentication against the timeout
+                    await Promise.race([authPromise, timeout]);
+                    
+                    // If we reach here, authentication succeeded before timeout
+                    initApp();
+
+                } catch (error) {
+                    // --- CRITICAL UI RESET BLOCK (Guaranteed to run on failure/timeout) ---
+                    console.error("CRITICAL AUTHENTICATION FAILURE (Please report this error message):", error.message);
+                    
+                    // 1. Show access gate, hide loading screen
+                    appLoadingEl.style.display = 'none';
+                    accessGateEl.style.display = 'flex';
+                    
+                    // 2. Set user facing error message
+                    let message = "Authentication failed: Please check your connection or try again.";
+                    if (error.message.includes("timed out")) {
+                        message = "Connection timeout (10s limit exceeded). The service is unreachable. Please try again.";
+                    }
+                    alertUser(message, true);
+                    
+                } finally {
+                    // 3. UNCONDITIONALLY re-enable the button
+                    unlockBtn.disabled = false;
                 }
                 
-                // 2. Simple Markdown to HTML rendering for better display (line breaks and lists)
-                let formattedText = text;
-                // Basic list/bullet point handling
-                formattedText = formattedText.replace(/^\s*\*(.*)/gm, '<li>$1</li>');
-                formattedText = formattedText.replace(/(\n<li>.*<\/li>(\n<li>.*<\/li>)*)/g, '<ul>$1</ul>');
-                // Basic heading (##) handling
-                formattedText = formattedText.replace(/^##\s*(.*)/gm, '<h3>$1</h3>');
-                // Basic paragraph breaks
-                formattedText = formattedText.replace(/\n\n/g, '</p><p>');
-                formattedText = `<p>${formattedText}</p>`;
-                
-                // 3. Render the content
-                resourceContentEl.innerHTML = `<div class="prose max-w-none">${formattedText}</div>${sourcesHtml}`;
-                resourceContentEl.classList.remove('hidden');
-                initialMessageEl.classList.add('hidden');
+            } else {
+                accessKeyInput.value = '';
+                alertUser("Incorrect key. Try again.", true);
             }
+        }
+
+
+        // --- 10. INITIALIZATION AND LISTENERS ---
+        
+        function initAppListeners() {
+            // Access Gate Listener
+            unlockBtn.addEventListener('click', handleAccessGate);
+            accessKeyInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') { handleAccessGate(); }
+            });
+
+            // Navigation
+            viewSelector.addEventListener('change', (e) => switchView(e.target.value));
+
+            // Chord Event Listeners (Rest of the listeners...)
+            rootSelect.addEventListener('change', refreshChordDisplay);
+            baseOctaveSelect.addEventListener('change', refreshChordDisplay);
+            inversionSelect.addEventListener('change', refreshChordDisplay);
+            playModeSelect.addEventListener('change', refreshChordDisplay);
             
-            // --- 8. SIMPLE SONGS LOGIC ---
+            typeSelect.addEventListener('change', () => {
+                updateInversionOptions();
+                refreshChordDisplay();
+            });
             
-            function renderSongsView() {
-                songsListEl.innerHTML = '';
-                
-                SIMPLE_SONGS.forEach(song => {
-                    const chordChipsHtml = song.progression.map(fullChord => {
-                        // Split the full chord name (e.g., "C Major") into Root ("C") and Type ("Major")
-                        const parts = fullChord.split(' ');
-                        const rootNote = parts[0];
-                        const chordType = parts.length > 1 ? parts.slice(1).join(' ') : 'Major'; 
-                        
-                        return `<span class="chord-chip bg-primary-teal/20 text-primary-teal px-3 py-1 rounded-full text-sm font-semibold cursor-pointer hover:bg-primary-teal/40 transition-colors mr-2 mb-2 inline-block" data-root="${rootNote}" data-type="${chordType}">${fullChord}</span>`;
-                    }).join('');
-
-                    const songCard = document.createElement('div');
-                    songCard.className = 'bg-gray-700 p-5 rounded-xl shadow-lg border-l-4 border-secondary-pink';
-                    songCard.innerHTML = `
-                        <h3 class="text-2xl font-bold text-white mb-1">${song.title} <span class="text-sm font-normal text-gray-400">by ${song.artist}</span></h3>
-                        <p class="text-sm text-gray-400 mb-3">Key: <span class="text-accent-yellow font-semibold">${song.key}</span></p>
-                        <div class="flex flex-wrap items-center">
-                            <span class="text-gray-300 font-medium mr-2">Progression:</span>
-                            ${chordChipsHtml}
-                        </div>
-                    `;
-                    songsListEl.appendChild(songCard);
-                });
-                
-                // Add click listener for chord chips
-                document.querySelectorAll('.chord-chip').forEach(chip => {
-                    chip.addEventListener('click', (e) => {
-                        const rootNote = e.target.dataset.root;
-                        const chordType = e.target.dataset.type;
-                        
-                        setChordSelectors(rootNote, chordType);
-                        
-                        viewSelector.value = 'chord-view';
-                        switchView('chord-view');
-                        refreshChordDisplay(); 
-                    });
-                });
-            }
+            // Sharps/Flats Toggles
+            sharpsBtn.addEventListener('click', () => {
+                useSharps = true;
+                sharpsBtn.classList.add('bg-primary-teal', 'text-gray-900');
+                sharpsBtn.classList.remove('hover:bg-primary-teal/50', 'text-white');
+                flatsBtn.classList.remove('bg-primary-teal', 'text-gray-900');
+                flatsBtn.classList.add('hover:bg-primary-teal/50', 'text-white');
+                updateRootNoteNames();
+                refreshChordDisplay();
+            });
             
-            function setChordSelectors(root, type) {
-                // Determine if the root is a flat note (e.g., "Db")
-                const isFlatRoot = Object.keys(FLAT_TO_SHARP).includes(root);
-                
-                if (isFlatRoot) {
-                    // 1. Activate flats mode in UI
-                    if (useSharps) flatsBtn.click();
-                    // 2. Set the internal sharp root for calculation
-                    rootSelect.value = FLAT_TO_SHARP[root];
-                } else if (root.includes('#')) {
-                    // 1. Activate sharps mode in UI
-                    if (!useSharps) sharpsBtn.click();
-                    // 2. Set the internal sharp root (already correct)
-                    rootSelect.value = root;
-                } else {
-                    // 1. Default to sharps mode for natural notes
-                    if (!useSharps) sharpsBtn.click();
-                    // 2. Set the natural note
-                    rootSelect.value = root;
-                }
-                
-                // Find the correct Chord Type value
-                const typeKey = Object.keys(CHORD_FORMULAS).find(key => key.toLowerCase() === type.toLowerCase());
-                if (typeKey) {
-                    typeSelect.value = typeKey;
-                    // When chord type changes, update inversions
-                    updateInversionOptions(); 
-                } else {
-                    typeSelect.value = 'Major';
-                    updateInversionOptions(); 
-                }
-                
-                // Reset inversion to 0 for simplicity
-                inversionSelect.value = '0';
-            }
-
-
-            // --- 9. INITIALIZATION AND LISTENERS ---
+            flatsBtn.addEventListener('click', () => {
+                useSharps = false;
+                flatsBtn.classList.add('bg-primary-teal', 'text-gray-900');
+                flatsBtn.classList.remove('hover:bg-primary-teal/50', 'text-white');
+                sharpsBtn.classList.remove('bg-primary-teal', 'text-gray-900');
+                sharpsBtn.classList.add('hover:bg-primary-teal/50', 'text-white');
+                updateRootNoteNames();
+                refreshChordDisplay();
+            });
             
-            function init() {
-                initTone();
+            // Play/Stop/Download
+            playBtn.addEventListener('click', playChord);
+            stopBtn.addEventListener('click', stopChord);
+            
+            downloadBtn.addEventListener('click', () => {
+                const element = document.getElementById('piano-keyboard');
+                const name = element.dataset.name || 'piano-diagram';
                 
-                // Initial population, drawing, and display update
-                populateInitialSelectors(); // Populates all initial selectors
-                drawPiano();
-                renderSongsView();
-                refreshChordDisplay(); // Calculate and display the default chord
-                
-                // Default view on load
-                viewSelector.value = 'chord-view'; 
-                switchView(viewSelector.value); 
+                // Get the current dimensions of the content inside the scrollable container
+                const contentWidth = element.scrollWidth;
+                const contentHeight = element.scrollHeight;
 
-                // --- EVENT LISTENERS ---
-                
-                // Navigation
-                viewSelector.addEventListener('change', (e) => switchView(e.target.value));
-
-                // Chord Event Listeners (Call refreshChordDisplay for immediate calculation)
-                rootSelect.addEventListener('change', refreshChordDisplay);
-                baseOctaveSelect.addEventListener('change', refreshChordDisplay);
-                inversionSelect.addEventListener('change', refreshChordDisplay);
-                playModeSelect.addEventListener('change', refreshChordDisplay);
-                
-                // Chord Type Listener (Needs to update inversion options first)
-                typeSelect.addEventListener('change', () => {
-                    updateInversionOptions();
-                    refreshChordDisplay();
+                html2canvas(element, { 
+                    width: contentWidth, 
+                    height: contentHeight,
+                    backgroundColor: '#1f2937', 
+                    scale: 2 // Use a higher scale for better resolution
+                }).then(canvas => {
+                    const dataUrl = canvas.toDataURL('image/png');
+                    const a = document.createElement('a');
+                    a.href = dataUrl;
+                    a.download = `${name}-${chordNameEl.textContent.replace(/\s/g, '-')}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }).catch(err => {
+                    console.error("Error generating canvas:", err);
                 });
-                
-                downloadBtn.addEventListener('click', downloadDiagram);
-                playBtn.addEventListener('click', playChord);
-                stopBtn.addEventListener('click', stopChord);
-                
-                // Accidental Toggle Listeners (Needs to update root names and key labels)
-                sharpsBtn.addEventListener('click', () => {
-                    useSharps = true;
-                    // Visually update buttons
-                    sharpsBtn.classList.add('bg-primary-teal', 'text-gray-900');
-                    sharpsBtn.classList.remove('text-white', 'hover:bg-primary-teal/50');
-                    flatsBtn.classList.remove('bg-primary-teal', 'text-gray-900');
-                    flatsBtn.classList.add('text-white', 'hover:bg-primary-teal/50');
-                    updateRootNoteNames(); // Rebuilds the root list with sharps
-                    refreshChordDisplay(); // Recalculates and updates key labels
-                });
+            });
 
-                flatsBtn.addEventListener('click', () => {
-                    useSharps = false;
-                    // Visually update buttons
-                    flatsBtn.classList.add('bg-primary-teal', 'text-gray-900');
-                    flatsBtn.classList.remove('text-white', 'hover:bg-primary-teal/50');
-                    sharpsBtn.classList.remove('bg-primary-teal', 'text-gray-900');
-                    sharpsBtn.classList.add('text-white', 'hover:bg-primary-teal/50');
-                    updateRootNoteNames(); // Rebuilds the root list with flats
-                    refreshChordDisplay(); // Recalculates and updates key labels
-                });
-                
-                // Metronome Event Listeners
-                metroStartBtn.addEventListener('click', startMetronome);
-                metroStopBtn.addEventListener('click', stopMetronome);
-                
-                // Synchronize BPM controls
-                bpmInput.addEventListener('input', (e) => updateBPM(e.target.value));
-                bpmSlider.addEventListener('input', (e) => updateBPM(e.target.value));
-                
-                // Metronome Tone Control
-                metroToneSelect.addEventListener('change', (e) => {
-                    setMetronomeTone(e.target.value);
-                });
-                
-                // Resource Generator Listener
-                resourceGenerateBtn.addEventListener('click', generateResourceContent);
 
-                // Initialize stop state for metronome UI
-                stopMetronome(); 
-            }
+            // Metronome Event Listeners
+            metroStartBtn.addEventListener('click', startMetronome);
+            metroStopBtn.addEventListener('click', stopMetronome);
+            
+            bpmInput.addEventListener('input', (e) => updateBPM(e.target.value));
+            bpmSlider.addEventListener('input', (e) => updateBPM(e.target.value));
+            
+            metroToneSelect.addEventListener('change', (e) => {
+                setMetronomeTone(e.target.value);
+            });
+            
+            // Resource Generator Listener
+            resourceGenerateBtn.addEventListener('click', generateResourceContent);
 
-            init();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initFirebaseEnvironment(); 
+            initAppListeners(); 
+            accessGateEl.style.display = 'flex'; // Ensure initial state is the gate
         });
     </script>
 </body>
