@@ -676,9 +676,10 @@
             targetEl.textContent = message;
             targetEl.className = isError ? 'text-red-400 mt-4 h-6' : 'text-primary-teal mt-4 h-6';
             
+            // Set a timer to clear the message, useful for error feedback
             setTimeout(() => {
                 targetEl.textContent = '';
-            }, 5000); // Increased timeout for error messages
+            }, 5000); 
         }
         
         // --- CORE UTILITIES, METRONOME, AND RESOURCE LOGIC ---
@@ -688,19 +689,24 @@
             for (let i = 0; i < retries; i++) {
                 try {
                     const response = await fetch(url, options);
+                    
+                    // If the response is not OK (e.g., 400, 500 status)
                     if (!response.ok) {
+                        // Retry on specific failure codes (Rate Limit, Server Errors)
                         if (response.status === 429 || response.status >= 500) {
                             console.warn(`Request failed with status ${response.status}. Retrying in ${delay / 1000}s...`);
                             await new Promise(resolve => setTimeout(resolve, delay));
                             delay *= 2; // Exponential backoff
                             continue;
                         } else {
+                            // Non-retryable error (e.g., 403 Forbidden, 404 Not Found)
                             throw new Error(`API Error: ${response.status} - ${response.statusText}`);
                         }
                     }
                     return response;
                 } catch (error) {
                     if (i === retries - 1) {
+                        // Final attempt failed, throw the error to be caught by the caller
                         throw new Error(`Fetch failed after ${retries} attempts: ${error.message}`);
                     }
                     console.warn(`Fetch attempt failed: ${error.message}. Retrying in ${delay / 1000}s...`);
@@ -1325,14 +1331,18 @@
                 const response = await backoffFetch(API_URL, options);
                 const result = await response.json();
                 
+                // --- DEBUGGING LOG ---
+                console.log("LLM Raw Validation Response:", result);
+                // ---------------------
+                
                 const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toUpperCase();
                 
                 return responseText === 'VALID';
                 
             } catch (error) {
                 console.error("LLM Validation API call failed:", error);
-                // Treat API failure as invalid key for security
-                return false; 
+                // Re-throw the error to be caught by the outer handleAccessGate function's catch block
+                throw new Error(`Validation service failed: ${error.message}`);
             }
         }
 
@@ -1387,7 +1397,7 @@
                     initApp();
 
                 } else {
-                    // 4. INVALID KEY FAILURE
+                    // 4. INVALID KEY FAILURE (This is a business logic failure, not a network failure)
                     throw new Error("Invalid access key provided.");
                 }
 
@@ -1395,22 +1405,25 @@
                 // --- CRITICAL UI RESET BLOCK (Guaranteed to run on failure/timeout) ---
                 console.error("Access attempt failed:", error.message);
                 
-                // 1. Show access gate, hide loading screen
-                appLoadingEl.style.display = 'none';
-                accessGateEl.style.display = 'flex';
-                
-                // 2. Set user facing error message
+                // 1. Set user facing error message
                 let message = "Invalid key or authentication failed. Please check the key and try again.";
                 if (error.message.includes("timed out")) {
-                    message = "Connection timeout. Please try again.";
+                    message = "Connection timeout during authentication. Please try again.";
                 } else if (error.message.includes("Invalid access key")) {
                     message = "Incorrect secret key.";
+                } else if (error.message.includes("Validation service failed")) {
+                    message = "Network error or validation service failed to respond. Check connection.";
                 }
+                
+                // 2. Hide loading screen and show gate
+                appLoadingEl.style.display = 'none';
+                accessGateEl.style.display = 'flex';
+
                 alertUser(message, true);
                 accessKeyInput.value = ''; // Clear key immediately
                 
             } finally {
-                // 3. UNCONDITIONALLY re-enable the button
+                // 3. UNCONDITIONALLY re-enable the button and reset status text
                 unlockBtn.disabled = false;
                 loadingStatusEl.textContent = "Validating key..."; // Reset loading text
             }
