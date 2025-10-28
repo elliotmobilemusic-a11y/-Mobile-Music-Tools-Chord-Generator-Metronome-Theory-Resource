@@ -431,7 +431,15 @@
                 <section id="resources-view" style="display: none;">
                     <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Dynamic Learning Resources</h2>
                     
-                    <p class="text-gray-300 mb-6">Ask me anything about music theory, technique, or history, and I will generate a comprehensive resource for you, grounded in up-to-date information.</p>
+                    <!-- START: Updated instructions with numbered steps -->
+                    <h3 class="text-xl font-semibold text-primary-teal mb-3">How to Use the Resource Generator:</h3>
+                    <ol class="list-decimal list-inside text-gray-300 mb-6 space-y-2 ml-4">
+                        <li>Type your music question (e.g., "What is a plagal cadence?") into the input field below.</li>
+                        <li>Click the <span class="font-bold text-secondary-pink">Generate Resource</span> button.</li>
+                        <li>The AI will provide a concise explanation and structured practice advice, grounded in up-to-date web searches.</li>
+                        <li>Scroll down to view the full resource and external source links.</li>
+                    </ol>
+                    <!-- END: Updated instructions with numbered steps -->
                     
                     <!-- Query Input and Button -->
                     <div class="flex flex-col sm:flex-row gap-3 mb-6">
@@ -482,7 +490,6 @@
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
-        // --- SECRET KEY NO LONGER STORED HERE (Only in LLM System Prompt) ---
         
         // --- API Setup (for Key Validation and Resources)
         const API_KEY = ""; 
@@ -673,12 +680,12 @@
             // Use the dedicated message element on the access gate
             const targetEl = accessMessageEl;
 
-            targetEl.textContent = message;
+            targetEl.innerHTML = message;
             targetEl.className = isError ? 'text-red-400 mt-4 h-6' : 'text-primary-teal mt-4 h-6';
             
             // Set a timer to clear the message, useful for error feedback
             setTimeout(() => {
-                targetEl.textContent = '';
+                targetEl.innerHTML = '';
             }, 5000); 
         }
         
@@ -1253,14 +1260,21 @@
         
         function initFirebaseEnvironment() {
             try {
+                // --- CRITICAL CHECK FOR PROJECT ID ---
+                if (!firebaseConfig.projectId) {
+                    throw new Error("Configuration Error: 'projectId' not provided in firebaseConfig.");
+                }
+                
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
+                
+                // IMPORTANT: Set debug logging level here
                 setLogLevel('Debug'); 
 
                 setPersistence(auth, browserSessionPersistence)
                     .catch((error) => {
-                        console.error("Failed to set auth persistence:", error);
+                        console.error("Firebase Persistence Failed:", error);
                     });
                 
                 onAuthStateChanged(auth, (user) => {
@@ -1290,9 +1304,23 @@
                 });
 
             } catch (e) {
-                console.error("Firebase initialization failed:", e);
-                accessMessageEl.textContent = "Error: Firebase failed to initialize.";
-                unlockBtn.disabled = true;
+                const baseMessage = e.message.includes("projectId") 
+                    ? "CRITICAL ERROR: Firebase **Project ID is missing** from the application's configuration. The app cannot run without it."
+                    : `CRITICAL ERROR: Firebase failed to initialize. Details: ${e.message}`;
+                
+                console.error("CRITICAL: Firebase initialization failed!", e);
+                
+                // 1. Ensure the access gate is visible and update the message
+                if (accessGateEl && accessMessageEl && unlockBtn) {
+                    accessGateEl.style.display = 'flex';
+                    appLoadingEl.style.display = 'none';
+                    accessMessageEl.innerHTML = baseMessage;
+                    accessMessageEl.classList.add('h-auto', 'text-left', 'p-2', 'border', 'border-red-600', 'bg-red-900/20', 'rounded-lg');
+                    unlockBtn.disabled = true;
+                } else {
+                     // Fallback for extreme cases
+                     document.body.innerHTML = `<div class="p-10 text-red-400 bg-gray-900"><h1>Configuration Failure</h1><p>${baseMessage}</p></div>`;
+                }
             }
         }
 
@@ -1331,16 +1359,11 @@
                 const response = await backoffFetch(API_URL, options);
                 const result = await response.json();
                 
-                // --- DEBUGGING LOG ---
-                console.log("LLM Raw Validation Response:", result);
-                // ---------------------
-                
                 const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toUpperCase();
                 
                 return responseText === 'VALID';
                 
             } catch (error) {
-                console.error("LLM Validation API call failed:", error);
                 // Re-throw the error to be caught by the outer handleAccessGate function's catch block
                 throw new Error(`Validation service failed: ${error.message}`);
             }
@@ -1355,7 +1378,12 @@
                 return;
             }
             
-            accessMessageEl.textContent = "";
+            // Clear any previous error messages
+            accessMessageEl.innerHTML = "";
+            accessMessageEl.classList.remove('h-auto', 'text-left', 'p-2', 'border', 'border-red-600', 'bg-red-900/20', 'rounded-lg');
+            accessMessageEl.classList.add('h-6'); // Reset height
+            
+            // UI state: Hide gate, show loading
             accessGateEl.style.display = 'none';
             appLoadingEl.style.display = 'flex'; 
             unlockBtn.disabled = true; 
@@ -1382,6 +1410,8 @@
                         if (initialAuthToken) {
                             userCredential = await signInWithCustomToken(auth, initialAuthToken);
                         } else {
+                            // This path is often triggered if the token is missing,
+                            // allowing anonymous access per the canvas protocol.
                             userCredential = await signInAnonymously(auth);
                         }
                         if (userCredential && userCredential.user) {
@@ -1397,20 +1427,20 @@
                     initApp();
 
                 } else {
-                    // 4. INVALID KEY FAILURE (This is a business logic failure, not a network failure)
+                    // 4. INVALID KEY FAILURE (Business logic failure)
                     throw new Error("Invalid access key provided.");
                 }
 
             } catch (error) {
                 // --- CRITICAL UI RESET BLOCK (Guaranteed to run on failure/timeout) ---
-                console.error("Access attempt failed:", error.message);
+                console.error("Access attempt failed:", error.message, error);
                 
                 // 1. Set user facing error message
                 let message = "Invalid key or authentication failed. Please check the key and try again.";
                 if (error.message.includes("timed out")) {
                     message = "Connection timeout during authentication. Please try again.";
                 } else if (error.message.includes("Invalid access key")) {
-                    message = "Incorrect secret key.";
+                    message = "Incorrect secret key. Remember it is **Maestro2025**.";
                 } else if (error.message.includes("Validation service failed")) {
                     message = "Network error or validation service failed to respond. Check connection.";
                 }
@@ -1525,7 +1555,7 @@
             lucide.createIcons();
             initFirebaseEnvironment(); 
             initAppListeners(); 
-            accessGateEl.style.display = 'flex'; // Ensure initial state is the gate
+            // The gate will be shown by initFirebaseEnvironment or the error handling if it fails.
         });
     </script>
 </body>
