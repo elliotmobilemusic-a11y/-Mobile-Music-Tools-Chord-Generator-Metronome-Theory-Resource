@@ -38,9 +38,7 @@
     
     <!-- 3. Custom CSS for the piano keys and metronome -->
     <style>
-        body {
-            font-family: 'Montserrat', 'sans-serif';
-        }
+        body { font-family: 'Montserrat', 'sans-serif'; }
 
         /* White key styles */
         .key.white {
@@ -173,18 +171,26 @@
             animation: dotPulse 1.5s infinite linear;
         }
         
-        /* Ensure the prose styles for the generated resource are applied */
-        #resource-content .prose {
-            max-width: 100%;
+        /* Loading/Access Screen Styles */
+        #login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1f2937;
+            z-index: 100;
         }
-        
+
+        /* Ensure the prose styles for the generated resource are applied */
+        #resource-content .prose { max-width: 100%; }
         #resource-content .prose h3 {
-            color: #fcd34d; /* yellow headings */
+            color: #fcd34d; 
             border-bottom: 1px solid #4b5563;
             padding-bottom: 0.5rem;
         }
         #resource-content .prose p, #resource-content .prose ul {
-            color: #d1d5db; /* light gray text */
+            color: #d1d5db; 
         }
 
         /* Animations for dot pulse (color updated) */
@@ -197,29 +203,28 @@
             90% { box-shadow: 9999px 0 0 0 #fcd34d; }
             100% { box-shadow: 9999px 0 0 0 #fcd34d; }
         }
-
-        @keyframes dotPulseBefore {
-            0% { box-shadow: 9984px 0 0 0 #fcd34d; }
-            30% { box-shadow: 9994px 0 0 0 #fcd34d; }
-            50% { box-shadow: 9984px 0 0 0 #fcd34d; }
-            70% { box-shadow: 9974px 0 0 0 #fcd34d; }
-            90% { box-shadow: 9984px 0 0 0 #fcd34d; }
-            100% { box-shadow: 9984px 0 0 0 #fcd34d; }
-        }
-
-        @keyframes dotPulseAfter {
-            0% { box-shadow: 10014px 0 0 0 #fcd34d; }
-            30% { box-shadow: 10004px 0 0 0 #fcd34d; }
-            50% { box-shadow: 10014px 0 0 0 #fcd34d; }
-            70% { box-shadow: 10024px 0 0 0 #fcd34d; }
-            90% { box-shadow: 10014px 0 0 0 #fcd34d; }
-            100% { box-shadow: 10014px 0 0 0 #fcd34d; }
-        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen p-4 md:p-8 flex items-center justify-center">
 
-    <div class="max-w-7xl w-full">
+    <!-- 🔒 LOGIN/LOADING SCREEN -->
+    <div id="login-screen" class="flex items-center justify-center transition-opacity duration-500">
+        <div class="text-center p-8 bg-gray-800 rounded-xl shadow-2xl border border-gray-700 max-w-sm w-full">
+            <div id="login-status-icon">
+                <svg id="loading-spinner" class="animate-spin h-8 w-8 text-primary-teal mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+            <h2 id="login-title" class="text-2xl font-bold text-white mb-2">Authenticating Access...</h2>
+            <p id="login-message" class="text-gray-400">Checking user credentials against the allowed list.</p>
+            <p id="user-id-display" class="text-sm text-primary-teal mt-4 font-mono break-all"></p>
+            <p class="text-xs text-red-400 mt-2 italic">If access is denied, please share the ID above with the administrator.</p>
+        </div>
+    </div>
+    
+    <!-- 🎵 MAIN APPLICATION CONTAINER (Hidden until authentication succeeds) -->
+    <div id="app-container" class="max-w-7xl w-full hidden">
         <main class="bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-10 border border-gray-700">
             
             <!-- Header -->
@@ -234,6 +239,7 @@
                     <option value="songs-view">🎶 Simple Songs</option>
                     <option value="metronome-view">⏰ Metronome</option>
                     <option value="resources-view">📚 Resources & Tools</option>
+                    <option value="admin-view">🔑 Admin Access Control</option>
                 </select>
             </div>
 
@@ -331,7 +337,7 @@
             
             ---
             <!-- 2. METRONOME VIEW -->
-            <section id="metronome-view">
+            <section id="metronome-view" class="hidden">
                 <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Metronome</h2>
                 <div class="flex flex-col lg:flex-row items-center justify-center gap-6 mb-8 p-6 bg-gray-700 rounded-xl shadow-lg flex-wrap">
                     
@@ -374,7 +380,7 @@
             
             ---
             <!-- 3. SIMPLE SONGS VIEW -->
-            <section id="songs-view">
+            <section id="songs-view" class="hidden">
                 <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Simple Song Chord Progressions</h2>
                 
                 <p class="text-gray-300 mb-6">These popular songs use easy, repetitive chord sequences. Click any **chord chip** to instantly see and play that chord on the diagram page!</p>
@@ -387,7 +393,7 @@
             
             ---
             <!-- 4. DYNAMIC RESOURCES VIEW -->
-            <section id="resources-view">
+            <section id="resources-view" class="hidden">
                 <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Dynamic Learning Resources</h2>
                 
                 <p class="text-gray-300 mb-6">Ask me anything about music theory, technique, or history, and I will generate a comprehensive resource for you, grounded in up-to-date information.</p>
@@ -419,6 +425,41 @@
                 </div>
             </section>
 
+            ---
+            <!-- 5. ADMIN ACCESS CONTROL VIEW -->
+            <section id="admin-view" class="hidden">
+                <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">🔑 Admin Access Control (Firestore)</h2>
+                
+                <div class="bg-gray-700 p-6 rounded-xl shadow-lg border-l-4 border-accent-yellow">
+                    <h3 class="text-xl font-bold text-accent-yellow mb-4">Current User Status</h3>
+                    <p class="text-gray-300 mb-2">Your current User ID (UID): <span id="current-uid" class="font-mono text-sm text-white break-all bg-gray-600 p-1 rounded">Loading...</span></p>
+                    <p class="text-gray-300 mb-4">Access Status: <span id="access-status" class="font-bold text-red-400">Loading...</span></p>
+                    
+                    <p class="text-sm text-gray-400 italic border-t border-gray-600 pt-4">
+                        **How Access Works:** This application uses a public Firestore collection named `allowedUsers`. Access is granted only if your UID exists as a document in this collection with the field `allowed: true`.
+                    </p>
+                </div>
+
+                <div class="bg-gray-700 p-6 rounded-xl shadow-lg mt-6">
+                    <h3 class="text-xl font-bold text-primary-teal mb-4">Manage Allowed Users (Simulation)</h3>
+                    <p class="text-gray-300 mb-4">To grant access to a new user, enter their UID below and click "Add User".</p>
+                    
+                    <input type="text" id="new-uid-input" placeholder="Paste the new user's UID here (e.g., Q1K6e...)" class="w-full bg-gray-800 border border-gray-600 text-white text-lg rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-inner mb-3">
+                    
+                    <button id="add-user-btn" class="w-full bg-primary-teal hover:bg-teal-600 text-gray-900 font-bold text-lg p-3 rounded-lg transition-all duration-200 shadow-lg">
+                        Add User to Allowed List
+                    </button>
+                    <p id="admin-message" class="text-sm mt-3 text-red-400 hidden"></p>
+                </div>
+
+                <div class="bg-gray-700 p-6 rounded-xl shadow-lg mt-6">
+                    <h3 class="text-xl font-bold text-white mb-4">Current Allowed List</h3>
+                    <div id="allowed-list" class="space-y-2 text-sm text-gray-300">
+                        <p>Listening to Firestore...</p>
+                    </div>
+                </div>
+            </section>
+            
         </main>
         
         <!-- Copyright Footer with Title Case -->
@@ -428,15 +469,227 @@
 
     </div>
 
-    <!-- JavaScript Logic -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- 1. DATA DEFINITIONS ---
+    <!-- Firebase Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // --- 1. GLOBAL FIREBASE VARIABLES (MANDATORY) ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db = null;
+        let auth = null;
+        let currentUserId = null;
+        
+        // --- 2. AUTHENTICATION LOGIC ---
+        
+        async function initFirebase() {
+            try {
+                // Initialize App
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                
+                // Set Firestore log level for debugging
+                setLogLevel('Debug');
+
+                // Sign in using custom token or anonymously
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // Wait for auth state change to get the final user ID
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                        document.getElementById('user-id-display').textContent = `Your UID: ${currentUserId}`;
+                        document.getElementById('current-uid').textContent = currentUserId;
+
+                        // Start access check
+                        checkAccess(currentUserId);
+                    } else {
+                        // This should theoretically not happen with the token flow
+                        document.getElementById('login-title').textContent = 'Error';
+                        document.getElementById('login-message').textContent = 'Could not establish authentication. Please refresh.';
+                    }
+                });
+
+            } catch (error) {
+                console.error("Firebase Initialization Error:", error);
+                document.getElementById('login-title').textContent = 'Auth Failed';
+                document.getElementById('login-message').textContent = `Error: ${error.message}`;
+            }
+        }
+        
+        const ALLOWED_USERS_COLLECTION = `artifacts/${appId}/public/data/allowedUsers`;
+
+        function checkAccess(uid) {
+            const docRef = doc(db, ALLOWED_USERS_COLLECTION, uid);
             
+            // Listen for changes in the access document in real-time
+            onSnapshot(docRef, (docSnap) => {
+                const loginTitleEl = document.getElementById('login-title');
+                const loginMessageEl = document.getElementById('login-message');
+                const accessStatusEl = document.getElementById('access-status');
+                const appContainerEl = document.getElementById('app-container');
+                const loginScreenEl = document.getElementById('login-screen');
+
+                if (docSnap.exists() && docSnap.data().allowed === true) {
+                    // ACCESS GRANTED
+                    loginTitleEl.textContent = 'Access Granted!';
+                    loginMessageEl.textContent = 'Welcome back! Starting application.';
+                    appContainerEl.classList.remove('hidden');
+                    loginScreenEl.style.opacity = '0';
+                    setTimeout(() => loginScreenEl.classList.add('hidden'), 500); // Hide after transition
+                    accessStatusEl.textContent = 'GRANTED';
+                    accessStatusEl.classList.remove('text-red-400', 'text-yellow-400');
+                    accessStatusEl.classList.add('text-primary-teal');
+                    
+                    // Initialize the main app logic once access is confirmed
+                    if (typeof window.initApp === 'function') {
+                        window.initApp();
+                    }
+                    
+                    // Start listening to the full allowed list for the Admin Panel
+                    setupAllowedUserListener();
+
+                } else {
+                    // ACCESS DENIED
+                    loginTitleEl.textContent = 'Access Denied';
+                    loginMessageEl.textContent = 'Your user ID is not on the administrator\'s allowed list.';
+                    document.getElementById('loading-spinner').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-8 w-8 text-red-500 mx-auto mb-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.174 3.374 1.94 3.374h14.726c1.766 0 2.806-1.874 1.94-3.374L13.94 4.88c-.866-1.5-3.044-1.5-3.91 0L2.697 15.656zM12 15h.007v.008H12v-.008z" /></svg>`;
+                    accessStatusEl.textContent = 'DENIED';
+                    accessStatusEl.classList.add('text-red-400');
+                }
+            }, (error) => {
+                console.error("Firestore access check failed:", error);
+                document.getElementById('login-title').textContent = 'Connection Error';
+                document.getElementById('login-message').textContent = 'Could not connect to the database.';
+            });
+        }
+        
+        // --- 3. ADMIN PANEL LOGIC ---
+
+        function setupAllowedUserListener() {
+            const allowedListEl = document.getElementById('allowed-list');
+            const q = query(collection(db, ALLOWED_USERS_COLLECTION), where("allowed", "==", true));
+
+            onSnapshot(q, (snapshot) => {
+                allowedListEl.innerHTML = '';
+                if (snapshot.empty) {
+                    allowedListEl.innerHTML = '<p class="text-gray-400 italic">No users currently allowed access.</p>';
+                    return;
+                }
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const listItem = document.createElement('div');
+                    listItem.className = 'flex justify-between items-center bg-gray-600 p-2 rounded';
+                    listItem.innerHTML = `
+                        <span class="font-mono text-xs break-all">${doc.id}</span>
+                        <button data-uid="${doc.id}" class="remove-user-btn text-xs font-bold text-red-400 hover:text-red-500 ml-4">
+                            Remove
+                        </button>
+                    `;
+                    allowedListEl.appendChild(listItem);
+                });
+
+                document.querySelectorAll('.remove-user-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const uidToRemove = e.target.dataset.uid;
+                        removeUserAccess(uidToRemove);
+                    });
+                });
+            });
+        }
+        
+        async function grantUserAccess(uid) {
+            const adminMessageEl = document.getElementById('admin-message');
+            adminMessageEl.classList.add('hidden');
+            if (!db || !uid) {
+                adminMessageEl.textContent = 'Database or UID missing.';
+                adminMessageEl.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const docRef = doc(db, ALLOWED_USERS_COLLECTION, uid);
+                await setDoc(docRef, { 
+                    allowed: true, 
+                    username: `User-${uid.substring(0, 5)}`,
+                    added_at: new Date().toISOString()
+                }, { merge: true });
+
+                adminMessageEl.textContent = `Success! User ${uid.substring(0, 5)}... has been granted access.`;
+                adminMessageEl.classList.remove('text-red-400');
+                adminMessageEl.classList.add('text-primary-teal');
+                adminMessageEl.classList.remove('hidden');
+                document.getElementById('new-uid-input').value = '';
+
+            } catch (error) {
+                console.error("Error granting access:", error);
+                adminMessageEl.textContent = `Error granting access: ${error.message}`;
+                adminMessageEl.classList.add('text-red-400');
+                adminMessageEl.classList.remove('hidden');
+            }
+        }
+        
+        async function removeUserAccess(uid) {
+            if (!db || !uid) return;
+
+            try {
+                const docRef = doc(db, ALLOWED_USERS_COLLECTION, uid);
+                // Set 'allowed' to false instead of deleting to keep a record (good practice)
+                await setDoc(docRef, { allowed: false }, { merge: true });
+                // If the user wants to completely remove the document, use deleteDoc(docRef);
+                alertUser(`User ${uid.substring(0, 5)}... removed from allowed list.`, false);
+            } catch (error) {
+                console.error("Error removing access:", error);
+                alertUser(`Error removing access: ${error.message}`, true);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Setup Admin Button Listener
+            document.getElementById('add-user-btn').addEventListener('click', () => {
+                const uid = document.getElementById('new-uid-input').value.trim();
+                if (uid.length > 5) {
+                    grantUserAccess(uid);
+                } else {
+                    document.getElementById('admin-message').textContent = 'Please enter a valid, complete UID.';
+                    document.getElementById('admin-message').classList.remove('hidden');
+                }
+            });
+
+            // Start the Firebase auth process immediately
+            initFirebase();
+        });
+
+
+        // Export required functions/vars for the main app script to use
+        window.db = db;
+        window.auth = auth;
+        window.currentUserId = currentUserId;
+        window.getDoc = getDoc;
+        window.doc = doc;
+        window.collection = collection;
+
+    </script>
+
+    <!-- MAIN APP JAVASCRIPT LOGIC (Now wrapped in a function called by the Firebase script) -->
+    <script>
+        // Place all the original application logic inside this function
+        window.initApp = function() {
+            // --- 1. DATA DEFINITIONS ---
             const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-            // Mapping for flat display names to internal sharp notes
             const SHARP_TO_FLAT = { 'C#': 'Db', 'D#': 'Eb', 'F#': 'Gb', 'G#': 'Ab', 'A#': 'Bb' };
-            const FLAT_TO_SHARP = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' }; // For reverse lookup
+            const FLAT_TO_SHARP = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' }; 
             
             const CHORD_FORMULAS = {
                 'Major': [0, 4, 7], 'Minor': [0, 3, 7], 'Diminished': [0, 3, 6], 'Augmented': [0, 4, 8],
@@ -452,7 +705,7 @@
             const NUM_OCTAVES = 3; 
             const START_OCTAVE = 3; 
             
-            // API Setup
+            // API Setup (for Resources View)
             const API_KEY = ""; 
             const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
             const SYSTEM_PROMPT = "You are a highly experienced and friendly music theory tutor. Your task is to provide a concise, single-paragraph explanation of the user's music query, followed by a detailed, structured section (use bullet points or lists) that provides specific, actionable practice advice and examples. The goal is to provide a comprehensive, grounded resource for the musician. Do not use external links in the generated text content. Base your answer solely on the information you find.";
@@ -484,26 +737,20 @@
             function initTone() {
                 try {
                     if (!audioContextReady) {
-                        // This prevents Tone.js from restarting everything if it was already running (e.g., from metronome)
-                        if (Tone.Transport.state === 'started') {
-                             Tone.Transport.stop();
-                        }
+                        if (Tone.Transport.state === 'started') { Tone.Transport.stop(); }
                         Tone.Transport.clear(0);
                         
                         const reverb = new Tone.Reverb({
-                            decay: 2.5, 
-                            preDelay: 0.01
+                            decay: 2.5, preDelay: 0.01
                         }).toDestination();
 
-                        // Initialize Piano Polysynth
                         synth = new Tone.PolySynth(Tone.Synth, {
-                            oscillator: { type: "sine" }, // Smoother sine wave
+                            oscillator: { type: "sine" }, 
                             envelope: { 
                                 attack: 0.005, decay: 0.6, sustain: 0.3, release: 1.8   
                             }
                         }).connect(reverb); 
                         
-                        // Initialize standard Tone.Synth for flexible metronome clicks
                         metronomeSynth = new Tone.Synth({
                             oscillator: { type: currentMetroTone }, 
                             envelope: {
@@ -511,10 +758,8 @@
                             }
                         }).toDestination();
                         
-                        // Initialize MembraneSynth for drum click option
                         membraneSynth = new Tone.MembraneSynth({
-                            pitchDecay: 0.008,
-                            octaves: 2,
+                            pitchDecay: 0.008, octaves: 2,
                             envelope: {
                                 attack: 0.001, decay: 0.1, sustain: 0,
                             }
@@ -536,6 +781,7 @@
             const metronomeView = document.getElementById('metronome-view');
             const resourcesView = document.getElementById('resources-view'); 
             const songsView = document.getElementById('songs-view');
+            const adminView = document.getElementById('admin-view');
             
             // Chord Elements
             const rootSelect = document.getElementById('root-note');
@@ -588,6 +834,7 @@
                 metronomeView.style.display = 'none';
                 resourcesView.style.display = 'none'; 
                 songsView.style.display = 'none';
+                adminView.style.display = 'none'; // Include new view
 
                 document.getElementById(viewId).style.display = 'block';
             }
@@ -635,18 +882,10 @@
                 downloadBtn.textContent = 'Preparing...';
                 downloadBtn.disabled = true;
 
-                // Use html2canvas to render the target element
                 html2canvas(targetElement, {
-                    allowTaint: true, 
-                    useCORS: true,
-                    backgroundColor: '#1f2937', 
-                    scale: 2, 
-                    logging: false,
+                    allowTaint: true, useCORS: true, backgroundColor: '#1f2937', scale: 2, logging: false,
                 }).then(canvas => {
-                    // Create a data URL from the canvas
                     const imageURL = canvas.toDataURL('image/png');
-                    
-                    // Create a temporary link element for downloading
                     const link = document.createElement('a');
                     link.href = imageURL;
                     
@@ -654,17 +893,14 @@
                     const type = typeSelect.value;
                     const displayName = getDisplayName(root);
                     
-                    // Filename
                     link.download = `${displayName}-${type}-Diagram.png`;
                     
-                    // Append to body, click it, and remove it immediately
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
                     
                     alertUser("Diagram downloaded successfully!", false);
 
-                    // Reset button state
                     downloadBtn.textContent = originalText;
                     downloadBtn.disabled = false;
                 }).catch(error => {
@@ -676,17 +912,15 @@
             }
 
             function populateInitialSelectors() {
-                // 1. Populate Root Notes (Uses current 'useSharps' state)
                 rootSelect.innerHTML = '';
                 NOTES.forEach(note => {
                     const option = document.createElement('option');
-                    option.value = note; // Internal value is always sharp/natural
-                    option.textContent = getDisplayName(note); // Display name reflects sharps/flats
+                    option.value = note; 
+                    option.textContent = getDisplayName(note); 
                     rootSelect.appendChild(option);
                 });
-                rootSelect.value = 'C'; // Default to C
+                rootSelect.value = 'C'; 
 
-                // 2. Populate Chord Types (Always the same)
                 typeSelect.innerHTML = '';
                 Object.keys(CHORD_FORMULAS).forEach(type => {
                     const option = document.createElement('option');
@@ -694,16 +928,14 @@
                     option.textContent = type;
                     typeSelect.appendChild(option);
                 });
-                typeSelect.value = 'Major'; // Default to Major
+                typeSelect.value = 'Major'; 
                 
-                // 3. Populate Inversions (Uses default 'Major')
                 updateInversionOptions(); 
             }
             
             function updateRootNoteNames() {
-                // Keep the same internal value, but update the text content of the options
                 const currentRootValue = rootSelect.value;
-                rootSelect.innerHTML = ''; // Clear to rebuild with new display names
+                rootSelect.innerHTML = ''; 
                 
                 NOTES.forEach(note => {
                     const option = document.createElement('option');
@@ -712,7 +944,6 @@
                     rootSelect.appendChild(option);
                 });
                 
-                // Re-select the previously selected *internal* root note value
                 rootSelect.value = currentRootValue;
             }
 
@@ -721,7 +952,6 @@
                 const formulaLength = CHORD_FORMULAS[currentType].length;
                 let currentInversion = parseInt(inversionSelect.value, 10);
                 
-                // Clamp the current inversion if it's too high for the new chord type
                 if (isNaN(currentInversion) || currentInversion < 0 || currentInversion >= formulaLength) {
                     currentInversion = 0; 
                 }
@@ -730,16 +960,10 @@
                 for (let i = 0; i < formulaLength; i++) {
                     const option = document.createElement('option');
                     option.value = i;
-                    let text = "Root Position";
-                    if (i === 1) text = "1st Inversion";
-                    if (i === 2) text = "2nd Inversion";
-                    if (i === 3) text = "3rd Inversion";
-                    if (i === 4) text = "4th Inversion";
-                    if (i === 5) text = "5th Inversion";
+                    let text = ["Root Position", "1st Inversion", "2nd Inversion", "3rd Inversion", "4th Inversion", "5th Inversion"][i] || `${i}th Inversion`;
                     option.textContent = text;
                     inversionSelect.appendChild(option);
                 }
-                // Set back to the clamped/original inversion
                 inversionSelect.value = currentInversion.toString();
             }
 
@@ -755,10 +979,8 @@
                         whiteKey.dataset.note = noteName;
                         whiteKey.dataset.octave = octave;
                         
-                        // Black Key (Child of White Key)
                         const blackKey = document.createElement('div');
                         blackKey.className = 'key black';
-                        // Get the sharp note for the black key (e.g., C#)
                         const blackNoteIndex = (NOTES.indexOf(noteName) + 1) % 12;
                         const blackNoteName = NOTES[blackNoteIndex];
                         blackKey.dataset.note = blackNoteName;
@@ -766,19 +988,18 @@
 
                         const blackLabel = document.createElement('div');
                         blackLabel.className = 'key-label black-label';
-                        blackKey.appendChild(blackLabel); // Label content updated in updateKeyLabels
+                        blackKey.appendChild(blackLabel); 
 
                         whiteKey.appendChild(blackKey);
 
                         const whiteLabel = document.createElement('div');
                         whiteLabel.className = 'key-label white-label';
-                        whiteKey.appendChild(whiteLabel); // Label content updated in updateKeyLabels
+                        whiteKey.appendChild(whiteLabel); 
 
                         pianoContainer.appendChild(whiteKey);
                     });
                 }
                 
-                // Add the final C note (C6)
                 const finalCOctave = START_OCTAVE + NUM_OCTAVES;
                 const finalCKey = document.createElement('div');
                 finalCKey.className = 'key white';
@@ -789,7 +1010,6 @@
                 finalCKey.appendChild(finalWhiteLabel);
                 pianoContainer.appendChild(finalCKey);
                 
-                // Add key interaction handlers
                 document.querySelectorAll('.key').forEach(key => {
                     const pressHandler = (e) => {
                         e.preventDefault(); 
@@ -801,37 +1021,30 @@
                            synth.triggerAttackRelease(`${noteName}${octave}`, "8n");
                         }
                         
-                        // Add visual press feedback
                         key.classList.add('pressed');
                     };
 
                     const releaseHandler = (e) => {
                         e.preventDefault();
-                        // Remove visual press feedback
                         key.classList.remove('pressed');
                     };
 
-                    // Use both mouse and touch events for full compatibility
                     key.addEventListener('mousedown', pressHandler);
                     key.addEventListener('mouseup', releaseHandler);
                     key.addEventListener('touchstart', pressHandler);
                     key.addEventListener('touchend', releaseHandler);
-                    key.addEventListener('mouseleave', releaseHandler); // Safety release
+                    key.addEventListener('mouseleave', releaseHandler); 
                 });
             }
 
             function getChordNotes(rootNote, formula) {
-                if (!Array.isArray(formula) || formula.length === 0) {
-                     return [];
-                }
+                if (!Array.isArray(formula) || formula.length === 0) { return []; }
 
                 const rootIndex = NOTES.indexOf(rootNote);
-                // Base Octave is now 4 by default from the HTML, but read from the selector
                 const baseOctave = parseInt(baseOctaveSelect.value, 10); 
                 
                 const notes = formula.map(interval => {
                     const noteIndex = (rootIndex + interval) % 12;
-                    // Handle octave rollover for the interval (e.g., C to D9)
                     const octaveOffset = Math.floor((rootIndex + interval) / 12);
                     return {
                         name: NOTES[noteIndex],
@@ -842,15 +1055,12 @@
                 const inversion = parseInt(inversionSelect.value, 10);
                 let invertedNotes = [...notes];
 
-                // Perform the inversion by moving the lowest note up one octave
                 for (let i = 0; i < inversion; i++) {
                     const firstNote = invertedNotes.shift();
-                    // Move the first note up one octave
                     firstNote.octaveOffset += 1; 
                     invertedNotes.push(firstNote);
                 }
 
-                // Finalize MIDI names with the correct base octave
                 const notesWithOctave = invertedNotes.map(n => ({
                     name: n.name,
                     octave: baseOctave + n.octaveOffset,
@@ -869,12 +1079,10 @@
                     Tone.Transport.clear(arpeggiator.id);
                     arpeggiator = null; 
                     
-                    // Stop transport only if metronome is NOT running
                     if (!metronomeLoop) {
                         Tone.Transport.stop(); 
                     }
                 }
-                // Reset button state
                 playBtn.textContent = 'Play Chord';
                 playBtn.disabled = false;
                 playBtn.classList.remove('bg-gray-500', 'cursor-not-allowed');
@@ -882,12 +1090,9 @@
             }
 
             function playChord() {
-                if (!synth) {
-                    alertUser("Synth not initialized. Please refresh.", true);
-                    return;
-                }
+                if (!synth) { alertUser("Synth not initialized. Please refresh.", true); return; }
                 
-                stopChord(); // Stop any currently playing chord or arpeggio
+                stopChord(); 
                 
                 if (Tone.context.state !== 'running') { Tone.start(); }
                 
@@ -902,47 +1107,36 @@
                 playBtn.classList.remove('bg-secondary-pink', 'hover:bg-pink-600');
                 playBtn.classList.add('bg-gray-500', 'cursor-not-allowed');
 
-
                 if (mode === 'simultaneous') {
-                    // Play all notes at the same time
                     synth.triggerAttack(notesToPlay);
                     
-                    // Schedule a release after 2.0 seconds
                     Tone.Transport.scheduleOnce(() => {
                         stopChord();
                     }, Tone.now() + 2.0);
                     
                 } else if (mode === 'arpeggiated') {
-                    // Use a sequence for arpeggiation
                     arpeggiator = new Tone.Sequence((time, note) => {
                         synth.triggerAttackRelease(note, "8n", time);
                     }, notesToPlay, "8n").start(0);
 
-                    // If metronome is running, don't change loop properties
                     if (!metronomeLoop) {
                         Tone.Transport.loop = true;
                         Tone.Transport.loopStart = 0;
                         const sequenceDuration = notesToPlay.length * Tone.Time("8n").toSeconds();
                         Tone.Transport.loopEnd = sequenceDuration;
-                    
                         Tone.Transport.start();
                     } else {
-                        // If metronome is running, just start the sequence without looping the transport
                         Tone.Transport.start();
                     }
-                    
-                    // The arpeggiator will continue until stopped, so we don't schedule a global stop
                 }
             }
 
             function updateKeyLabels() {
-                // Update key labels based on current accidental mode
                 document.querySelectorAll('.key').forEach(key => {
                     const octave = key.dataset.octave;
                     const noteName = key.dataset.note;
                     const isBlackKey = key.classList.contains('black');
                     
-                    // Find the correct label element
                     const labelEl = isBlackKey 
                         ? key.querySelector('.black-label') 
                         : key.querySelector('.white-label');
@@ -954,14 +1148,11 @@
             }
 
             function highlightPiano(notesData) {
-                // Clear all highlights
                 document.querySelectorAll('.key.highlighted').forEach(key => {
                     key.classList.remove('highlighted');
                 });
 
-                // Highlight the notes
                 notesData.forEach(note => {
-                    // Find keys matching the note name (which is always sharp/natural) and octave
                     const selector = `.key[data-note="${note.name}"][data-octave="${note.octave}"]`;
                     document.querySelectorAll(selector).forEach(key => {
                         key.classList.add('highlighted');
@@ -980,21 +1171,17 @@
                 chordNotesEl.textContent = notesData.map(n => `${n.displayName}${n.octave}`).join(' - ');
             }
             
-            // New function for general chord logic
             function refreshChordDisplay() {
-                stopChord(); // Always stop playback when parameters change
+                stopChord(); 
                 
-                // 1. Ensure labels are up-to-date (in case accidental mode changed implicitly)
                 updateKeyLabels();
 
-                // 2. Calculate the new chord
                 const rootNote = rootSelect.value;
                 const chordType = typeSelect.value;
                 const formula = CHORD_FORMULAS[chordType];
                 
                 const notesData = getChordNotes(rootNote, formula);
 
-                // 3. Update UI based on new chord
                 updateChordInfo(notesData);
                 highlightPiano(notesData);
             }
@@ -1004,9 +1191,7 @@
             function updateBPM(newBPM) {
                 newBPM = Math.max(40, Math.min(240, newBPM));
                 
-                if (Tone.Transport) {
-                    Tone.Transport.bpm.value = newBPM;
-                }
+                if (Tone.Transport) { Tone.Transport.bpm.value = newBPM; }
                 
                 bpmInput.value = newBPM;
                 bpmSlider.value = newBPM;
@@ -1020,12 +1205,8 @@
             }
 
             function startMetronome() {
-                if (!audioContextReady) {
-                    alertUser("Audio engine not ready. Please try again.", true);
-                    return;
-                }
+                if (!audioContextReady) { alertUser("Audio engine not ready. Please try again.", true); return; }
                 
-                // Stop any running arpeggiator but keep transport running
                 if (arpeggiator) {
                     Tone.Transport.clear(arpeggiator.id);
                     arpeggiator = null;
@@ -1033,15 +1214,14 @@
                 
                 if (Tone.context.state !== 'running') { Tone.start(); }
                 
-                if (metronomeLoop) return; // Already running
+                if (metronomeLoop) return; 
 
-                Tone.Transport.clear(); // Clear all schedules, including old metronome loops
-                Tone.Transport.loop = false; // Metronome should not loop the whole transport
+                Tone.Transport.clear(); 
+                Tone.Transport.loop = false; 
 
-                // Setup the metronome click loop (subdivision is '4n' for quarter notes)
                 metronomeLoop = new Tone.Loop(time => {
                     const isFirstBeat = (metronomeLoop.iterations % 4 === 0);
-                    const pitch = isFirstBeat ? "C5" : "C4"; // Higher pitch for beat 1
+                    const pitch = isFirstBeat ? "C5" : "C4"; 
                     const duration = "16n";
 
                     if (currentMetroTone === 'membrane' && membraneSynth) {
@@ -1051,7 +1231,6 @@
                         metronomeSynth.triggerAttackRelease(pitch, duration, time);
                     }
                    
-                    // Visual feedback
                     Tone.Draw.schedule(() => {
                         metronomeIndicator.classList.add('metronome-active');
                         setTimeout(() => {
@@ -1064,7 +1243,6 @@
                 metronomeLoop.start(0);
                 Tone.Transport.start();
                 
-                // Update UI state
                 metroStartBtn.disabled = true;
                 metroStopBtn.disabled = false;
                 metroStartBtn.classList.remove('bg-accent-yellow', 'hover:bg-yellow-600');
@@ -1076,14 +1254,13 @@
             function stopMetronome() {
                 if (!metronomeLoop) return; 
                 
-                Tone.Transport.stop(); // Stops transport and clears everything
+                Tone.Transport.stop(); 
                 metronomeLoop.dispose();
                 metronomeLoop = null;
                 Tone.Transport.clear(); 
 
                 metronomeIndicator.classList.remove('metronome-active');
                 
-                // Update UI state
                 metroStartBtn.disabled = false;
                 metroStopBtn.disabled = true;
                 metroStartBtn.classList.add('bg-accent-yellow', 'hover:bg-yellow-600');
@@ -1127,10 +1304,7 @@
                             body: JSON.stringify(payload)
                         });
 
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-
+                        if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
                         responseData = await response.json();
                         break; 
                         
@@ -1169,7 +1343,6 @@
                 const text = candidate.content.parts[0].text;
                 let sourcesHtml = '';
                 
-                // 1. Extract and format grounding sources
                 const groundingMetadata = candidate.groundingMetadata;
                 if (groundingMetadata && groundingMetadata.groundingAttributions) {
                     const sources = groundingMetadata.groundingAttributions
@@ -1191,18 +1364,13 @@
                     }
                 }
                 
-                // 2. Simple Markdown to HTML rendering for better display (line breaks and lists)
                 let formattedText = text;
-                // Basic list/bullet point handling
                 formattedText = formattedText.replace(/^\s*\*(.*)/gm, '<li>$1</li>');
                 formattedText = formattedText.replace(/(\n<li>.*<\/li>(\n<li>.*<\/li>)*)/g, '<ul>$1</ul>');
-                // Basic heading (##) handling
                 formattedText = formattedText.replace(/^##\s*(.*)/gm, '<h3>$1</h3>');
-                // Basic paragraph breaks
                 formattedText = formattedText.replace(/\n\n/g, '</p><p>');
                 formattedText = `<p>${formattedText}</p>`;
                 
-                // 3. Render the content
                 resourceContentEl.innerHTML = `<div class="prose max-w-none">${formattedText}</div>${sourcesHtml}`;
                 resourceContentEl.classList.remove('hidden');
                 initialMessageEl.classList.add('hidden');
@@ -1215,7 +1383,6 @@
                 
                 SIMPLE_SONGS.forEach(song => {
                     const chordChipsHtml = song.progression.map(fullChord => {
-                        // Split the full chord name (e.g., "C Major") into Root ("C") and Type ("Major")
                         const parts = fullChord.split(' ');
                         const rootNote = parts[0];
                         const chordType = parts.length > 1 ? parts.slice(1).join(' ') : 'Major'; 
@@ -1236,7 +1403,6 @@
                     songsListEl.appendChild(songCard);
                 });
                 
-                // Add click listener for chord chips
                 document.querySelectorAll('.chord-chip').forEach(chip => {
                     chip.addEventListener('click', (e) => {
                         const rootNote = e.target.dataset.root;
@@ -1252,38 +1418,28 @@
             }
             
             function setChordSelectors(root, type) {
-                // Determine if the root is a flat note (e.g., "Db")
                 const isFlatRoot = Object.keys(FLAT_TO_SHARP).includes(root);
                 
                 if (isFlatRoot) {
-                    // 1. Activate flats mode in UI
                     if (useSharps) flatsBtn.click();
-                    // 2. Set the internal sharp root for calculation
                     rootSelect.value = FLAT_TO_SHARP[root];
                 } else if (root.includes('#')) {
-                    // 1. Activate sharps mode in UI
                     if (!useSharps) sharpsBtn.click();
-                    // 2. Set the internal sharp root (already correct)
                     rootSelect.value = root;
                 } else {
-                    // 1. Default to sharps mode for natural notes
                     if (!useSharps) sharpsBtn.click();
-                    // 2. Set the natural note
                     rootSelect.value = root;
                 }
                 
-                // Find the correct Chord Type value
                 const typeKey = Object.keys(CHORD_FORMULAS).find(key => key.toLowerCase() === type.toLowerCase());
                 if (typeKey) {
                     typeSelect.value = typeKey;
-                    // When chord type changes, update inversions
                     updateInversionOptions(); 
                 } else {
                     typeSelect.value = 'Major';
                     updateInversionOptions(); 
                 }
                 
-                // Reset inversion to 0 for simplicity
                 inversionSelect.value = '0';
             }
 
@@ -1293,28 +1449,22 @@
             function init() {
                 initTone();
                 
-                // Initial population, drawing, and display update
-                populateInitialSelectors(); // Populates all initial selectors
+                populateInitialSelectors(); 
                 drawPiano();
                 renderSongsView();
-                refreshChordDisplay(); // Calculate and display the default chord
+                refreshChordDisplay(); 
                 
-                // Default view on load
                 viewSelector.value = 'chord-view'; 
-                switchView(viewSelector.value); 
-
+                
                 // --- EVENT LISTENERS ---
                 
-                // Navigation
                 viewSelector.addEventListener('change', (e) => switchView(e.target.value));
 
-                // Chord Event Listeners (Call refreshChordDisplay for immediate calculation)
                 rootSelect.addEventListener('change', refreshChordDisplay);
                 baseOctaveSelect.addEventListener('change', refreshChordDisplay);
                 inversionSelect.addEventListener('change', refreshChordDisplay);
                 playModeSelect.addEventListener('change', refreshChordDisplay);
                 
-                // Chord Type Listener (Needs to update inversion options first)
                 typeSelect.addEventListener('change', () => {
                     updateInversionOptions();
                     refreshChordDisplay();
@@ -1324,51 +1474,43 @@
                 playBtn.addEventListener('click', playChord);
                 stopBtn.addEventListener('click', stopChord);
                 
-                // Accidental Toggle Listeners (Needs to update root names and key labels)
                 sharpsBtn.addEventListener('click', () => {
                     useSharps = true;
-                    // Visually update buttons
                     sharpsBtn.classList.add('bg-primary-teal', 'text-gray-900');
                     sharpsBtn.classList.remove('text-white', 'hover:bg-primary-teal/50');
                     flatsBtn.classList.remove('bg-primary-teal', 'text-gray-900');
                     flatsBtn.classList.add('text-white', 'hover:bg-primary-teal/50');
-                    updateRootNoteNames(); // Rebuilds the root list with sharps
-                    refreshChordDisplay(); // Recalculates and updates key labels
+                    updateRootNoteNames(); 
+                    refreshChordDisplay(); 
                 });
 
                 flatsBtn.addEventListener('click', () => {
                     useSharps = false;
-                    // Visually update buttons
                     flatsBtn.classList.add('bg-primary-teal', 'text-gray-900');
                     flatsBtn.classList.remove('text-white', 'hover:bg-primary-teal/50');
                     sharpsBtn.classList.remove('bg-primary-teal', 'text-gray-900');
                     sharpsBtn.classList.add('text-white', 'hover:bg-primary-teal/50');
-                    updateRootNoteNames(); // Rebuilds the root list with flats
-                    refreshChordDisplay(); // Recalculates and updates key labels
+                    updateRootNoteNames(); 
+                    refreshChordDisplay(); 
                 });
                 
-                // Metronome Event Listeners
                 metroStartBtn.addEventListener('click', startMetronome);
                 metroStopBtn.addEventListener('click', stopMetronome);
                 
-                // Synchronize BPM controls
                 bpmInput.addEventListener('input', (e) => updateBPM(e.target.value));
                 bpmSlider.addEventListener('input', (e) => updateBPM(e.target.value));
                 
-                // Metronome Tone Control
                 metroToneSelect.addEventListener('change', (e) => {
                     setMetronomeTone(e.target.value);
                 });
                 
-                // Resource Generator Listener
                 resourceGenerateBtn.addEventListener('click', generateResourceContent);
 
-                // Initialize stop state for metronome UI
                 stopMetronome(); 
             }
-
-            init();
-        });
+            
+            init(); // Initialize the main app components
+        };
     </script>
 </body>
 </html>
