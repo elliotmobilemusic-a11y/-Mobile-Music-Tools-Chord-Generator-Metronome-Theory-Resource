@@ -256,7 +256,7 @@
             <header class="mb-6 bg-gray-800 rounded-xl shadow-inner p-4 flex flex-col md:flex-row items-center justify-between border-b border-primary-teal/50">
                 <div class="text-center md:text-left mb-2 md:mb-0">
                     <h1 class="text-3xl md:text-4xl font-extrabold text-white">Mobile Music Tools</h1>
-                    <p id="user-status" class="text-sm text-gray-400 mt-1">Status: Loading...</p>
+                    <p id="user-status" class="text-sm text-gray-400 mt-1">Status: Standalone Mode (No Cloud Storage)</p>
                 </div>
                 
                 <button id="sign-out-btn" class="bg-gray-600 hover:bg-red-500 text-white font-bold text-sm py-2 px-4 rounded-lg transition-colors duration-200 shadow-md flex items-center" style="display: none;">
@@ -481,16 +481,21 @@
     <!-- JavaScript Logic -->
     <script type="module">
         // --- FIREBASE IMPORTS ---
+        // Note: Imports are kept for potential future use, but initialization is now guarded.
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         
-        // --- GLOBAL FIREBASE/APP VARIABLES ---
+        // --- GLOBAL FIREBASE/APP VARIABLES (MODIFIED FOR STANDALONE MODE) ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
-        
+        // New flag and stub config to handle missing environment variables gracefully.
+        const isFirebaseAvailable = typeof __firebase_config !== 'undefined';
+        const STUB_CONFIG = { projectId: 'mock-project-id', apiKey: 'mock-api-key' };
+        const firebaseConfig = isFirebaseAvailable ? JSON.parse(__firebase_config) : STUB_CONFIG;
+
+
         // --- API Setup (for Key Validation and Resources)
         const API_KEY = ""; 
         const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
@@ -505,7 +510,7 @@
         let app = null;
         let db = null;
         let auth = null;
-        let userId = null; 
+        let userId = 'STANDALONE_USER'; // Use a default ID in standalone mode
         
         // --- 1. DATA DEFINITIONS ---
         
@@ -1256,76 +1261,64 @@
         }
 
 
-        // --- 9. FIREBASE AUTHENTICATION & GATING SETUP ---
+        // --- 9. FIREBASE AUTHENTICATION & GATING SETUP (MODIFIED) ---
         
         function initFirebaseEnvironment() {
-            try {
-                // --- CRITICAL CHECK FOR PROJECT ID ---
-                if (!firebaseConfig.projectId) {
-                    throw new Error("Configuration Error: 'projectId' not provided in firebaseConfig.");
-                }
-                
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                
-                // IMPORTANT: Set debug logging level here
-                setLogLevel('Debug'); 
+            // Only try to initialize if the config was actually provided by the environment
+            if (isFirebaseAvailable && firebaseConfig.projectId) {
+                try {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    
+                    setLogLevel('Debug'); 
 
-                setPersistence(auth, browserSessionPersistence)
-                    .catch((error) => {
-                        console.error("Firebase Persistence Failed:", error);
-                    });
-                
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        userStatusEl.innerHTML = `Signed in as <span class="font-bold text-primary-teal">${userId}</span>`;
-                        signOutBtn.style.display = 'flex';
-                    } else {
-                        userId = null;
-                        userStatusEl.textContent = "Status: Signed out";
-                        signOutBtn.style.display = 'none';
+                    setPersistence(auth, browserSessionPersistence)
+                        .catch((error) => {
+                            console.error("Firebase Persistence Failed:", error);
+                        });
+                    
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            userId = user.uid;
+                            userStatusEl.innerHTML = `Signed in as <span class="font-bold text-primary-teal">${userId}</span>`;
+                            signOutBtn.style.display = 'flex';
+                        } else {
+                            userId = null;
+                            userStatusEl.textContent = "Status: Signed out";
+                            signOutBtn.style.display = 'none';
 
-                        // If the user was using the app and signs out, return to the gate
-                        if (!authenticatedContentEl.classList.contains('hidden')) {
-                             authenticatedContentEl.classList.add('hidden');
-                             appLoadingEl.style.display = 'none';
-                             accessGateEl.style.display = 'flex';
-                             alertUser("You have been signed out. Please re-enter the key.", false);
+                            if (!authenticatedContentEl.classList.contains('hidden')) {
+                                authenticatedContentEl.classList.add('hidden');
+                                appLoadingEl.style.display = 'none';
+                                accessGateEl.style.display = 'flex';
+                                alertUser("You have been signed out. Please re-enter the key.", false);
+                            }
                         }
-                    }
-                });
+                    });
 
-                signOutBtn.addEventListener('click', () => {
-                    if (auth.currentUser) {
-                        signOut(auth).catch(e => console.error("Sign out failed:", e));
-                    }
-                });
+                    signOutBtn.addEventListener('click', () => {
+                        if (auth.currentUser) {
+                            signOut(auth).catch(e => console.error("Sign out failed:", e));
+                        }
+                    });
 
-            } catch (e) {
-                const baseMessage = e.message.includes("projectId") 
-                    ? "CRITICAL ERROR: Firebase **Project ID is missing** from the application's configuration. The app cannot run without it."
-                    : `CRITICAL ERROR: Firebase failed to initialize. Details: ${e.message}`;
-                
-                console.error("CRITICAL: Firebase initialization failed!", e);
-                
-                // 1. Ensure the access gate is visible and update the message
-                if (accessGateEl && accessMessageEl && unlockBtn) {
-                    accessGateEl.style.display = 'flex';
-                    appLoadingEl.style.display = 'none';
-                    accessMessageEl.innerHTML = baseMessage;
-                    accessMessageEl.classList.add('h-auto', 'text-left', 'p-2', 'border', 'border-red-600', 'bg-red-900/20', 'rounded-lg');
-                    unlockBtn.disabled = true;
-                } else {
-                     // Fallback for extreme cases
-                     document.body.innerHTML = `<div class="p-10 text-red-400 bg-gray-900"><h1>Configuration Failure</h1><p>${baseMessage}</p></div>`;
+                } catch (e) {
+                    console.error("Firebase initialization failed (Critical Config Missing, switching to Standalone Mode):", e);
+                    // If init fails, we will proceed without auth/db handles.
+                    auth = null;
+                    db = null;
                 }
+            } else {
+                // Standalone Mode: Auth and DB remain null
+                console.log("Running in Standalone Mode: Firebase config missing.");
+                userStatusEl.innerHTML = "Status: **Standalone Mode** (No Cloud Storage)";
+                signOutBtn.style.display = 'none';
             }
         }
 
         function initApp() {
-            // This function runs once the key is validated AND the user is successfully authenticated.
+            // This function runs once the key is validated.
             
             // 1. Hide gate/loading, show content
             accessGateEl.style.display = 'none';
@@ -1337,6 +1330,7 @@
             populateInitialSelectors();
             drawPiano();
             renderSongsView();
+            refreshChordDisplay();
             stopMetronome(); 
         }
         
@@ -1395,33 +1389,28 @@
                 const isValid = await validateKeyWithLLM(enteredKey);
                 
                 if (isValid) {
-                    loadingStatusEl.textContent = "Key accepted. Authenticating user...";
+                    loadingStatusEl.textContent = "Key accepted. Preparing app...";
                     
-                    // 2. AUTHENTICATION (Using Firebase)
-                    let userCredential;
-                    
-                    // Define a timeout promise (10 seconds)
-                    const timeout = new Promise((_, reject) => {
-                        setTimeout(() => reject(new Error("Authentication timed out after 10 seconds.")), 10000);
-                    });
-
-                    // Authentication Promise
-                    const authPromise = (async () => {
-                        if (initialAuthToken) {
-                            userCredential = await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            // This path is often triggered if the token is missing,
-                            // allowing anonymous access per the canvas protocol.
-                            userCredential = await signInAnonymously(auth);
-                        }
-                        if (userCredential && userCredential.user) {
-                            return userCredential;
-                        } else {
-                            throw new Error("Authentication failed: User object missing.");
-                        }
-                    })();
-                    
-                    await Promise.race([authPromise, timeout]);
+                    if (auth) {
+                        // 2A. FIREBASE AUTHENTICATION (Only runs if initFirebaseEnvironment succeeded)
+                        const authPromise = (async () => {
+                            if (initialAuthToken) {
+                                await signInWithCustomToken(auth, initialAuthToken);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                        })();
+                        
+                        // Define a timeout promise (10 seconds)
+                        const timeout = new Promise((_, reject) => {
+                            setTimeout(() => reject(new Error("Authentication timed out after 10 seconds.")), 10000);
+                        });
+                        
+                        await Promise.race([authPromise, timeout]);
+                    } else {
+                        // 2B. STANDALONE MODE: Bypass authentication
+                        loadingStatusEl.textContent = "Key accepted. Launching in standalone mode...";
+                    }
                     
                     // 3. SUCCESS
                     initApp();
@@ -1443,6 +1432,8 @@
                     message = "Incorrect secret key. Remember it is **Maestro2025**.";
                 } else if (error.message.includes("Validation service failed")) {
                     message = "Network error or validation service failed to respond. Check connection.";
+                } else if (error.message.includes("auth/network-request-failed")) {
+                    message = "Firebase network connection failed. Launching in standalone mode is recommended.";
                 }
                 
                 // 2. Hide loading screen and show gate
