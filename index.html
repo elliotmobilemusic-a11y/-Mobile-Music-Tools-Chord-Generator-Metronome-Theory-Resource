@@ -84,7 +84,7 @@
         .key.black.pressed {
             transform: translateY(1px);
             background-color: #0c0f13; /* Darker pressed state */
-            box-shadow: 0 1px 2px rgba(0,0,0,0.7);
+            box-shadow: 0 1px 2px rgba(0, 1, 0, 0.7);
         }
 
         /* No black key on E or B */
@@ -348,8 +348,9 @@
                             </select>
                         </div>
 
-                        <div class="md:self-end">
-                            <label for="accidental-toggle" class="block text-sm font-medium text-gray-400 mb-1">Accidentals</label>
+                        <div>
+                            <!-- FIX: Removed 'for="accidental-toggle"' as it labels a button group, not a single form element with that ID. -->
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Accidentals</label>
                             <div class="flex bg-gray-700 border border-gray-600 rounded-lg overflow-hidden shadow-md">
                                 <button id="sharps-btn" class="w-1/2 p-3 text-lg font-bold bg-primary-teal text-gray-900 transition-colors duration-200"># Sharps</button>
                                 <button id="flats-btn" class="w-1/2 p-3 text-lg font-bold hover:bg-primary-teal/50 text-white transition-colors duration-200">b Flats</button>
@@ -725,21 +726,46 @@
             let metronomeBPM = 120;
             let metronomeIntervalId = null;
             let beatNumber = 0;
-
-            // Tone.js Setup
-            const synth = new Tone.PolySynth(Tone.Synth, {
-                oscillator: { type: 'sine' },
-                envelope: {
-                    attack: 0.02,
-                    decay: 0.1,
-                    sustain: 0.3,
-                    release: 1,
-                },
-            }).toDestination();
             
-            // Metronome Tone.js Setup
-            let metroSynth = new Tone.MembraneSynth().toDestination();
-            let clickVolume = new Tone.Volume(-10).toDestination();
+            // Tone.js State
+            let synth = null;
+            let metroSynth = null;
+            let clickVolume = null;
+            let isAudioInitialized = false;
+
+            // Function to initialize Tone.js on first user interaction
+            const initializeAudio = async () => {
+                if (isAudioInitialized) return;
+                
+                try {
+                    await Tone.start();
+                    console.log("Audio Context started successfully.");
+
+                    // Initialize the instruments
+                    synth = new Tone.PolySynth(Tone.Synth, {
+                        oscillator: { type: 'sine' },
+                        envelope: {
+                            attack: 0.02,
+                            decay: 0.1,
+                            sustain: 0.3,
+                            release: 1,
+                        },
+                    }).toDestination();
+                    
+                    clickVolume = new Tone.Volume(-10).toDestination();
+                    metroSynth = new Tone.MembraneSynth().connect(clickVolume);
+
+                    isAudioInitialized = true;
+                } catch (error) {
+                    console.error("Failed to initialize AudioContext:", error);
+                }
+            };
+            
+            // Stops all currently playing notes
+            window.stopChord = () => {
+                if (synth) synth.releaseAll();
+                if (Tone.Transport) Tone.Transport.stop();
+            };
 
             // --- 3. UI ELEMENT REFERENCES ---
             const pianoKeyboard = document.getElementById('piano-keyboard');
@@ -842,17 +868,12 @@
                 };
             };
             
-            // Stops all currently playing notes
-            window.stopChord = () => {
-                synth.releaseAll();
-                Tone.Transport.stop();
-            };
-
             // Plays the calculated chord
-            const playChord = () => {
+            const playChord = async () => {
+                await initializeAudio(); // Ensure audio context is running
                 stopChord(); // Stop any previous playback
                 
-                if (activeNotes.length === 0) return;
+                if (!synth || activeNotes.length === 0) return;
 
                 if (currentPlayMode === 'simultaneous') {
                     // Play all notes at once
@@ -893,9 +914,9 @@
                         keyElement.className = 'key white flex-shrink-0';
                         keyElement.dataset.note = noteName;
                         keyElement.dataset.fullnote = fullNote;
-                        keyElement.addEventListener('mousedown', () => pressKey(keyElement, true));
+                        keyElement.addEventListener('mousedown', (e) => pressKey(keyElement, true, e));
                         keyElement.addEventListener('mouseup', () => releaseKey(keyElement, true));
-                        keyElement.addEventListener('touchstart', (e) => { e.preventDefault(); pressKey(keyElement, true); });
+                        keyElement.addEventListener('touchstart', (e) => { e.preventDefault(); pressKey(keyElement, true, e); });
                         keyElement.addEventListener('touchend', (e) => { e.preventDefault(); releaseKey(keyElement, true); });
 
                         const label = document.createElement('span');
@@ -924,9 +945,9 @@
                             const leftOffset = blackNoteCounter % 5 === 2 ? 'left-[0rem]' : 'left-[2.5rem]'; // Positioning logic for C# D# / F# G# A# groups
                             blackKeyElement.style.marginLeft = '-1rem'; // Correct initial overlap
                             
-                            blackKeyElement.addEventListener('mousedown', () => pressKey(blackKeyElement, true));
+                            blackKeyElement.addEventListener('mousedown', (e) => pressKey(blackKeyElement, true, e));
                             blackKeyElement.addEventListener('mouseup', () => releaseKey(blackKeyElement, true));
-                            blackKeyElement.addEventListener('touchstart', (e) => { e.preventDefault(); pressKey(blackKeyElement, true); });
+                            blackKeyElement.addEventListener('touchstart', (e) => { e.preventDefault(); pressKey(blackKeyElement, true, e); });
                             blackKeyElement.addEventListener('touchend', (e) => { e.preventDefault(); releaseKey(blackKeyElement, true); });
                             
                             const label = document.createElement('span');
@@ -1061,14 +1082,17 @@
             };
             
             // Key press/release visual and audio feedback
-            const pressKey = (keyElement, playAudio = false) => {
+            const pressKey = async (keyElement, playAudio = false, event = null) => {
+                if (event && (event.buttons === 0 || event.button !== 0) && event.type === 'mousedown') return;
+
                 if (keyElement.classList.contains('pressed')) return; // Avoid double press
                 
                 keyElement.classList.add('pressed');
                 const fullNote = keyElement.dataset.fullnote;
 
                 if (playAudio && fullNote) {
-                    synth.triggerAttack(fullNote);
+                    await initializeAudio(); // Initialize audio context on first press
+                    if (synth) synth.triggerAttack(fullNote);
                 }
             };
 
@@ -1076,7 +1100,7 @@
                 keyElement.classList.remove('pressed');
                 const fullNote = keyElement.dataset.fullnote;
 
-                if (stopAudio && fullNote) {
+                if (stopAudio && fullNote && synth) {
                     synth.triggerRelease(fullNote);
                 }
             };
@@ -1093,19 +1117,30 @@
                 metroStartBtn.textContent = 'Start';
                 metronomeIndicator.classList.remove('metronome-active');
                 
-                // Dispose and recreate to reset Tone.js if needed, or just stop the sound
-                metroSynth.releaseAll();
+                // Stop audio if running
+                if (metroSynth) metroSynth.releaseAll();
             };
 
-            const startMetronome = () => {
-                if (metronomeRunning) return;
+            const startMetronome = async () => {
+                if (metronomeRunning) {
+                    stopMetronome();
+                    return;
+                }
                 
+                await initializeAudio(); // Ensure audio context is running
+
+                if (!metroSynth) return;
+
                 metronomeRunning = true;
-                metroStartBtn.textContent = 'Running...';
+                metroStartBtn.textContent = 'Stop';
                 
                 // Update Tone.js synth for the selected tone
+                // Since metroSynth is already initialized, we just update the oscillator type for the click
                 metroSynth.dispose();
                 metroSynth = new Tone.MembraneSynth({
+                    "oscillator": {
+                        "type": metroToneSelect.value // Use the selected tone
+                    },
                     "envelope": {
                         "attack": 0.005,
                         "decay": 0.3,
@@ -1126,6 +1161,10 @@
                     // Play sound
                     const frequency = isDownbeat ? 800 : 500; // High pitch for downbeat
                     metroSynth.triggerAttackRelease(frequency, '8n');
+                    
+                    // Reset beat number if needed (time signature logic can be added here)
+                    // For now, simple continuous beat:
+                    if (beatNumber >= 4) beatNumber = 0; 
                 };
 
                 // Start the loop
@@ -1176,7 +1215,7 @@
                     });
 
                     const result = await response.json();
-                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't generate a resource for that query.";
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't generate a resource for that query. The API may be unavailable.";
                     
                     // Convert basic markdown to HTML for presentation
                     let htmlContent = text
@@ -1285,6 +1324,7 @@
                     metronomeBPM = parseInt(e.target.value) || 120;
                     bpmSliderMetro.value = metronomeBPM;
                     if (metronomeRunning) {
+                        // Restart metronome with new BPM
                         stopMetronome();
                         startMetronome();
                     }
@@ -1294,6 +1334,7 @@
                     metronomeBPM = parseInt(e.target.value);
                     bpmInputMetro.value = metronomeBPM;
                     if (metronomeRunning) {
+                        // Restart metronome with new BPM
                         stopMetronome();
                         startMetronome();
                     }
@@ -1301,11 +1342,17 @@
 
                 metroToneSelect.addEventListener('change', (e) => {
                     metronomeTone = e.target.value;
-                    // Note: Tone is handled inside startMetronome for simplicity, but we could update volume here
+                    // If metronome is running, restart it to apply the new tone
+                    if (metronomeRunning) {
+                        stopMetronome();
+                        startMetronome();
+                    }
                 });
 
                 metroStartBtn.addEventListener('click', startMetronome);
+                // Note: The metronome stop button is already handled inside stopMetronome logic
                 metroStopBtn.addEventListener('click', stopMetronome);
+
 
                 // Resource Listeners
                 resourceGenerateBtn.addEventListener('click', () => {
