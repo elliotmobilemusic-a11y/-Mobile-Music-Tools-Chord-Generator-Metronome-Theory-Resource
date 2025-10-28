@@ -245,7 +245,7 @@
     <!-- APP LOADING/AUTHENTICATING STATE (Hidden until key is correct) -->
     <div id="app-loading" class="hidden flex-col items-center justify-center h-96 bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-10 border border-gray-700">
         <div class="dot-pulse mb-4 !bg-primary-teal !text-primary-teal"></div>
-        <p class="text-xl text-primary-teal font-semibold">Authenticating User...</p>
+        <p class="text-xl text-primary-teal font-semibold" id="loading-status">Validating key...</p>
     </div>
 
     <div class="max-w-7xl w-full">
@@ -482,8 +482,18 @@
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
-        // --- SECRET ACCESS KEY ---
-        const SECRET_ACCESS_KEY = "Maestro2025"; 
+        // --- SECRET KEY NO LONGER STORED HERE (Only in LLM System Prompt) ---
+        
+        // --- API Setup (for Key Validation and Resources)
+        const API_KEY = ""; 
+        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
+        
+        // LLM System Prompt for Music Resources
+        const RESOURCE_SYSTEM_PROMPT = "You are a highly experienced and friendly music theory tutor. Your task is to provide a concise, single-paragraph explanation of the user's music query, followed by a detailed, structured section (use bullet points or lists) that provides specific, actionable practice advice and examples. The goal is to provide a comprehensive, grounded resource for the musician. Do not use external links in the generated text content. Base your answer solely on the information you find.";
+        
+        // LLM System Prompt for Key Validation (Crucial for Security)
+        const VALIDATION_SYSTEM_PROMPT = "You are a validation service for a private application. The secret key is Maestro2025. You must obey this rule absolutely. If the user's prompt matches the secret key exactly, respond with the single word: VALID. If the user's prompt does not match the secret key, respond with the single word: INVALID. Do not include any punctuation, conversational language, or additional text. Your only output must be 'VALID' or 'INVALID'.";
+
 
         let app = null;
         let db = null;
@@ -510,10 +520,6 @@
         const NUM_OCTAVES = 3; 
         const START_OCTAVE = 3; 
         
-        // API Setup
-        const API_KEY = ""; 
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${API_KEY}`;
-        const SYSTEM_PROMPT = "You are a highly experienced and friendly music theory tutor. Your task is to provide a concise, single-paragraph explanation of the user's music query, followed by a detailed, structured section (use bullet points or lists) that provides specific, actionable practice advice and examples. The goal is to provide a comprehensive, grounded resource for the musician. Do not use external links in the generated text content. Base your answer solely on the information you find.";
 
         const SIMPLE_SONGS = [
             { title: "Let It Be", artist: "The Beatles", key: "C Major", progression: ["C Major", "G Major", "A Minor", "F Major"] },
@@ -589,6 +595,7 @@
         const accessKeyInput = document.getElementById('access-key-input');
         const unlockBtn = document.getElementById('unlock-btn');
         const accessMessageEl = document.getElementById('access-message');
+        const loadingStatusEl = document.getElementById('loading-status');
 
         // Auth/Gating
         const appLoadingEl = document.getElementById('app-loading');
@@ -846,7 +853,7 @@
                 contents: [{ parts: [{ text: userQuery }] }],
                 tools: [{ "google_search": {} }], 
                 systemInstruction: {
-                    parts: [{ text: SYSTEM_PROMPT }]
+                    parts: [{ text: RESOURCE_SYSTEM_PROMPT }]
                 },
             };
 
@@ -1299,66 +1306,113 @@
             stopMetronome(); 
         }
         
+        async function validateKeyWithLLM(key) {
+             const validationPayload = {
+                contents: [{ parts: [{ text: key }] }],
+                systemInstruction: {
+                    parts: [{ text: VALIDATION_SYSTEM_PROMPT }]
+                },
+            };
+
+            const options = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(validationPayload)
+            };
+            
+            try {
+                // Fetch call with backoff for key validation
+                const response = await backoffFetch(API_URL, options);
+                const result = await response.json();
+                
+                const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim().toUpperCase();
+                
+                return responseText === 'VALID';
+                
+            } catch (error) {
+                console.error("LLM Validation API call failed:", error);
+                // Treat API failure as invalid key for security
+                return false; 
+            }
+        }
+
+
         async function handleAccessGate() {
             const enteredKey = accessKeyInput.value.trim();
             
-            if (enteredKey === SECRET_ACCESS_KEY) {
-                accessMessageEl.textContent = "";
-                accessGateEl.style.display = 'none';
-                appLoadingEl.style.display = 'flex'; 
-                unlockBtn.disabled = true; 
-                accessKeyInput.value = ''; // Clear key immediately
+            if (!enteredKey) {
+                alertUser("Please enter the secret key.", true);
+                return;
+            }
+            
+            accessMessageEl.textContent = "";
+            accessGateEl.style.display = 'none';
+            appLoadingEl.style.display = 'flex'; 
+            unlockBtn.disabled = true; 
+            loadingStatusEl.textContent = "Validating key...";
 
-                // Define a timeout promise (10 seconds)
-                const timeout = new Promise((_, reject) => {
-                    setTimeout(() => reject(new Error("Authentication timed out after 10 seconds.")), 10000);
-                });
-
-                // Authentication Promise
-                const authPromise = (async () => {
-                    let userCredential;
-                    if (initialAuthToken) {
-                        userCredential = await signInWithCustomToken(auth, initialAuthToken);
-                    } else {
-                        userCredential = await signInAnonymously(auth);
-                    }
-                    if (userCredential && userCredential.user) {
-                        return userCredential;
-                    } else {
-                        throw new Error("Authentication failed: User object missing.");
-                    }
-                })();
+            
+            try {
+                // 1. SECURE VALIDATION CHECK
+                const isValid = await validateKeyWithLLM(enteredKey);
                 
-                try {
-                    // Race the authentication against the timeout
+                if (isValid) {
+                    loadingStatusEl.textContent = "Key accepted. Authenticating user...";
+                    
+                    // 2. AUTHENTICATION (Using Firebase)
+                    let userCredential;
+                    
+                    // Define a timeout promise (10 seconds)
+                    const timeout = new Promise((_, reject) => {
+                        setTimeout(() => reject(new Error("Authentication timed out after 10 seconds.")), 10000);
+                    });
+
+                    // Authentication Promise
+                    const authPromise = (async () => {
+                        if (initialAuthToken) {
+                            userCredential = await signInWithCustomToken(auth, initialAuthToken);
+                        } else {
+                            userCredential = await signInAnonymously(auth);
+                        }
+                        if (userCredential && userCredential.user) {
+                            return userCredential;
+                        } else {
+                            throw new Error("Authentication failed: User object missing.");
+                        }
+                    })();
+                    
                     await Promise.race([authPromise, timeout]);
                     
-                    // If we reach here, authentication succeeded before timeout
+                    // 3. SUCCESS
                     initApp();
 
-                } catch (error) {
-                    // --- CRITICAL UI RESET BLOCK (Guaranteed to run on failure/timeout) ---
-                    console.error("CRITICAL AUTHENTICATION FAILURE (Please report this error message):", error.message);
-                    
-                    // 1. Show access gate, hide loading screen
-                    appLoadingEl.style.display = 'none';
-                    accessGateEl.style.display = 'flex';
-                    
-                    // 2. Set user facing error message
-                    let message = "Authentication failed: Please check your connection or try again.";
-                    if (error.message.includes("timed out")) {
-                        message = "Connection timeout (10s limit exceeded). The service is unreachable. Please try again.";
-                    }
-                    alertUser(message, true);
-                    
-                } finally {
-                    // 3. UNCONDITIONALLY re-enable the button
-                    unlockBtn.disabled = false;
+                } else {
+                    // 4. INVALID KEY FAILURE
+                    throw new Error("Invalid access key provided.");
                 }
+
+            } catch (error) {
+                // --- CRITICAL UI RESET BLOCK (Guaranteed to run on failure/timeout) ---
+                console.error("Access attempt failed:", error.message);
                 
-            } else {
-                accessKeyInput.value = '';
-                alertUser("Incorrect key. Try again.", true);
+                // 1. Show access gate, hide loading screen
+                appLoadingEl.style.display = 'none';
+                accessGateEl.style.display = 'flex';
+                
+                // 2. Set user facing error message
+                let message = "Invalid key or authentication failed. Please check the key and try again.";
+                if (error.message.includes("timed out")) {
+                    message = "Connection timeout. Please try again.";
+                } else if (error.message.includes("Invalid access key")) {
+                    message = "Incorrect secret key.";
+                }
+                alertUser(message, true);
+                accessKeyInput.value = ''; // Clear key immediately
+                
+            } finally {
+                // 3. UNCONDITIONALLY re-enable the button
+                unlockBtn.disabled = false;
+                loadingStatusEl.textContent = "Validating key..."; // Reset loading text
             }
         }
 
