@@ -169,31 +169,58 @@
             color: #d1d5db; /* light gray text */
         }
 
-        /* Animations for dot pulse (color updated) */
+        /* Loading Animation (re-pasting here for completeness) */
+        .dot-pulse {
+            position: relative;
+            left: -9999px;
+            width: 10px;
+            height: 10px;
+            border-radius: 5px;
+            background-color: #fcd34d;
+            color: #fcd34d;
+            box-shadow: 9999px 0 0 0 #fcd34d;
+            animation: dotPulse 1.5s infinite linear;
+        }
+        .dot-pulse::before, .dot-pulse::after {
+            content: "";
+            display: inline-block;
+            position: absolute;
+            top: 0;
+            width: 10px;
+            height: 10px;
+            border-radius: 5px;
+            background-color: #fcd34d;
+            color: #fcd34d;
+        }
+        .dot-pulse::before {
+            animation: dotPulseBefore 1.5s infinite linear;
+        }
+        .dot-pulse::after {
+            box-shadow: 10014px 0 0 0 #fcd34d;
+            animation: dotPulseAfter 1.5s infinite linear;
+        }
         @keyframes dotPulse {
             0% { box-shadow: 9999px 0 0 0 #fcd34d; }
             30% { box-shadow: 9999px 0 0 0 #fcd34d; }
-            30.1% { box-shadow: 9999px 0 0 0 #fcd34d; }
+            30.1% { box-shadow: 10009px 0 0 0 #fcd34d; }
             50% { box-shadow: 10009px 0 0 0 #fcd34d; }
             70% { box-shadow: 9999px 0 0 0 #fcd34d; }
             90% { box-shadow: 9999px 0 0 0 #fcd34d; }
             100% { box-shadow: 9999px 0 0 0 #fcd34d; }
         }
-
         @keyframes dotPulseBefore {
             0% { box-shadow: 9984px 0 0 0 #fcd34d; }
-            30% { box-shadow: 9994px 0 0 0 #fcd34d; }
-            50% { box-shadow: 9984px 0 0 0 #fcd34d; }
-            70% { box-shadow: 9974px 0 0 0 #fcd34d; }
+            30% { box-shadow: 9984px 0 0 0 #fcd34d; }
+            50% { box-shadow: 9974px 0 0 0 #fcd34d; }
+            70% { box-shadow: 9984px 0 0 0 #fcd34d; }
             90% { box-shadow: 9984px 0 0 0 #fcd34d; }
             100% { box-shadow: 9984px 0 0 0 #fcd34d; }
         }
-
         @keyframes dotPulseAfter {
             0% { box-shadow: 10014px 0 0 0 #fcd34d; }
-            30% { box-shadow: 10004px 0 0 0 #fcd34d; }
+            30% { box-shadow: 10024px 0 0 0 #fcd34d; }
             50% { box-shadow: 10014px 0 0 0 #fcd34d; }
-            70% { box-shadow: 10024px 0 0 0 #fcd34d; }
+            70% { box-shadow: 10014px 0 0 0 #fcd34d; }
             90% { box-shadow: 10014px 0 0 0 #fcd34d; }
             100% { box-shadow: 10014px 0 0 0 #fcd34d; }
         }
@@ -209,10 +236,10 @@
                 <p class="text-white text-xl">Checking access...</p>
             </div>
 
-            <!-- AUTHENTICATION SECTION (Only Login) -->
+            <!-- AUTHENTICATION SECTION (Initially shown) -->
             <div id="auth-section" class="hidden max-w-md mx-auto p-8 bg-gray-700 rounded-xl shadow-lg border border-primary-teal">
-                <h2 class="text-3xl font-bold text-white mb-6 text-center">Mobile Music Tools Login</h2>
-                <p class="text-gray-300 text-center mb-6">Enter the email and password you received after payment verification.</p>
+                <h2 class="text-3xl font-bold text-white mb-6 text-center">Member Login</h2>
+                <p class="text-gray-300 text-center mb-6">Enter your credentials to access the Mobile Music Tools.</p>
 
                 <form id="login-form" class="space-y-4">
                     <div>
@@ -227,8 +254,27 @@
                     <button type="submit" id="login-btn" class="w-full bg-secondary-pink hover:bg-pink-600 text-white font-bold text-lg p-3 rounded-lg transition-all duration-200 shadow-lg">
                         Sign In
                     </button>
-                    <p class="text-center text-sm text-gray-400 pt-4">
-                        <span class="text-accent-yellow font-semibold">Need access?</span> Please contact the site administrator to complete your one-time payment and receive your login credentials.
+                    <p class="text-center text-sm text-gray-400 pt-2">
+                        Don't have an account? <span id="switch-to-signup" class="text-primary-teal hover:text-teal-400 cursor-pointer font-semibold">Register here.</span>
+                    </p>
+                </form>
+
+                <form id="signup-form" class="space-y-4 hidden">
+                    <p class="text-center text-sm text-accent-yellow mb-4">Registration requires a one-time fee payment. Only registered users can sign up.</p>
+                    <div>
+                        <label for="signup-email" class="block text-sm font-medium text-gray-400">Email</label>
+                        <input type="email" id="signup-email" required class="w-full bg-gray-800 border border-gray-600 text-white p-3 rounded-lg focus:ring-secondary-pink focus:border-secondary-pink">
+                    </div>
+                    <div>
+                        <label for="signup-password" class="block text-sm font-medium text-gray-400">Password</label>
+                        <input type="password" id="signup-password" required class="w-full bg-gray-800 border border-gray-600 text-white p-3 rounded-lg focus:ring-secondary-pink focus:border-secondary-pink">
+                    </div>
+                    <div id="signup-error-message" class="text-red-400 text-sm hidden font-semibold"></div>
+                    <button type="submit" id="signup-btn" class="w-full bg-primary-teal hover:bg-teal-600 text-gray-900 font-bold text-lg p-3 rounded-lg transition-all duration-200 shadow-lg">
+                        Request Access
+                    </button>
+                    <p class="text-center text-sm text-gray-400 pt-2">
+                        Already have access? <span id="switch-to-login" class="text-secondary-pink hover:text-pink-400 cursor-pointer font-semibold">Sign In.</span>
                     </p>
                 </form>
             </div>
@@ -237,12 +283,13 @@
 
             <!-- APPLICATION SECTION (Hidden until successful login) -->
             <div id="app-content" class="hidden">
-                <div class="flex justify-between items-center mb-6 border-b border-gray-700 pb-4">
-                    <div class="text-center">
-                        <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-2">Mobile Music Tools</h1>
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-6 border-b border-gray-700 pb-4">
+                    <div class="text-center sm:text-left mb-2 sm:mb-0">
+                        <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-1">Mobile Music Tools</h1>
+                        <p id="user-display" class="text-sm text-gray-400 truncate"></p>
                     </div>
                     <button id="logout-btn" class="flex items-center text-sm text-gray-400 hover:text-red-400 font-semibold transition-colors duration-200 p-2 rounded-lg border border-transparent hover:border-red-400">
-                        <span id="user-display" class="mr-2"></span>
+                        <span class="mr-2">Logout</span>
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
                     </button>
                 </div>
@@ -446,10 +493,8 @@
     <!-- FIREBASE AND AUTH SCRIPT -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        setLogLevel('Debug');
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global variables provided by the environment
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -469,20 +514,39 @@
         
         // Forms
         const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
         const loginEmailInput = document.getElementById('login-email');
         const loginPasswordInput = document.getElementById('login-password');
+        const signupEmailInput = document.getElementById('signup-email');
+        const signupPasswordInput = document.getElementById('signup-password');
         const authError = document.getElementById('auth-error-message');
+        const signupError = document.getElementById('signup-error-message');
+        const switchToSignupBtn = document.getElementById('switch-to-signup');
+        const switchToLoginBtn = document.getElementById('switch-to-login');
+        
+        // Timeout check flag
+        let authCheckComplete = false;
+        
+        // Set a 3-second timeout to force the login screen if Firebase check hangs
+        setTimeout(() => {
+            if (!authCheckComplete) {
+                console.warn("Firebase Auth check timed out. Forcing login screen.");
+                showAuth();
+            }
+        }, 3000); // 3 seconds
 
         // State function to show/hide content
         const showApp = (user) => {
             loadingMessage.classList.add('hidden');
             authSection.classList.add('hidden');
             appContent.classList.remove('hidden');
-            userDisplay.textContent = user.email || 'User'; // Display email
+            // Display email and full UID
+            userDisplay.innerHTML = `<span class="font-bold text-white">${user.email}</span> (ID: ${user.uid})`; 
             // Re-run the main app initialization (if already defined)
             if (typeof window.init === 'function') {
                 window.init(); 
             }
+            authCheckComplete = true; // Mark check as complete
         };
 
         const showAuth = () => {
@@ -492,49 +556,32 @@
             // Stop audio if not logged in
             if (typeof window.stopChord === 'function') window.stopChord();
             if (typeof window.stopMetronome === 'function') window.stopMetronome();
+            authCheckComplete = true; // Mark check as complete
         };
 
         // --- AUTH STATE LISTENER ---
-        // Use setPersistence to ensure the session lasts as long as the tab/window is open
-        setPersistence(auth, browserSessionPersistence)
-            .then(() => {
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        // User is signed in. Check if they are a valid user in Firestore.
-                        // For this manual system, we check a simple 'isPaid' flag in a public collection.
-                        const userDocRef = doc(db, "artifacts", appId, "public", "paid_users", user.uid);
-                        
-                        try {
-                            const userDoc = await getDoc(userDocRef);
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // User is signed in. Now check if they are a PAID user.
+                const userDocRef = doc(db, "artifacts", appId, "public", "users", user.uid);
+                const userDoc = await getDoc(userDocRef);
 
-                            if (userDoc.exists() && userDoc.data().isPaid === true) {
-                                showApp(user);
-                            } else {
-                                // User signed in, but is not marked as paid in the database.
-                                console.warn("User signed in but not marked as paid. Signing out.");
-                                await signOut(auth);
-                                showAuth();
-                                authError.textContent = "Access denied. Please check your payment status.";
-                                authError.classList.remove('hidden');
-                            }
-                        } catch(error) {
-                            console.error("Error checking payment status:", error);
-                            await signOut(auth);
-                            showAuth();
-                            authError.textContent = "A database error occurred. Please try again later.";
-                            authError.classList.remove('hidden');
-                        }
-                    } else {
-                        // User is signed out.
-                        showAuth();
-                    }
-                });
-            })
-            .catch((error) => {
-                console.error("Error setting persistence:", error);
-            });
-        
-        
+                // Check if the user document exists AND the 'isPaid' flag is true
+                if (userDoc.exists() && userDoc.data().isPaid === true) {
+                    showApp(user);
+                } else {
+                    // User is signed in but not yet approved (paid)
+                    await signOut(auth);
+                    showAuth();
+                    authError.textContent = "Your account is awaiting payment verification. Please contact the administrator.";
+                    authError.classList.remove('hidden');
+                }
+            } else {
+                // User is signed out.
+                showAuth();
+            }
+        });
+
         // --- LOGIN HANDLER ---
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -542,43 +589,82 @@
             const email = loginEmailInput.value;
             const password = loginPasswordInput.value;
             
-            // Basic input validation
-            if (!email || !password) {
-                authError.textContent = "Please enter both email and password.";
-                authError.classList.remove('hidden');
-                return;
-            }
-
-            // Temporarily disable button
-            const loginBtn = document.getElementById('login-btn');
-            loginBtn.disabled = true;
-            loginBtn.textContent = 'Signing in...';
-            
             try {
-                // Try to sign in with email and password
                 await signInWithEmailAndPassword(auth, email, password);
-                // The onAuthStateChanged listener handles the rest
+                // The onAuthStateChanged listener handles the success and checks for payment
             } catch (error) {
-                authError.textContent = "Sign in failed. Check your email and password, or confirm your payment is complete.";
+                authError.textContent = "Sign in failed. Check your email and password.";
                 authError.classList.remove('hidden');
                 console.error("Login error:", error.message);
-            } finally {
-                // Re-enable button
-                loginBtn.disabled = false;
-                loginBtn.textContent = 'Sign In';
             }
         });
+
+        // --- SIGNUP HANDLER ---
+        // Creates a Firebase Auth user AND a Firestore record awaiting approval.
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            signupError.classList.add('hidden');
+            const email = signupEmailInput.value;
+            const password = signupPasswordInput.value;
+
+            // Simple validation
+            if (password.length < 6) {
+                signupError.textContent = "Password must be at least 6 characters.";
+                signupError.classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const uid = userCredential.user.uid;
+
+                // 1. Create a record in Firestore for the admin to approve
+                const userDocRef = doc(db, "artifacts", appId, "public", "users", uid);
+                await setDoc(userDocRef, {
+                    email: email,
+                    isPaid: false, // MANDATORY: User is NOT paid yet
+                    registeredAt: new Date().toISOString()
+                });
+
+                // 2. Sign out the new user immediately to force them to wait for admin approval
+                await signOut(auth);
+                
+                // 3. Clear form and switch to login with success message
+                signupForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+                authError.textContent = "Registration successful! Your account is pending payment verification. Please sign in once you've paid.";
+                authError.classList.remove('hidden');
+            } catch (error) {
+                signupError.textContent = error.message.includes('email-already-in-use') 
+                                        ? "This email is already registered. Please sign in." 
+                                        : "Registration failed. Please check your details.";
+                signupError.classList.remove('hidden');
+                console.error("Signup error:", error.message);
+            }
+        });
+
 
         // --- LOGOUT HANDLER ---
         logoutBtn.addEventListener('click', async () => {
             if (typeof window.stopChord === 'function') window.stopChord();
             if (typeof window.stopMetronome === 'function') window.stopMetronome();
-            try {
-                await signOut(auth);
-            } catch (error) {
-                console.error("Logout error:", error);
-            }
+            await signOut(auth);
             // The onAuthStateChanged listener will handle the UI switch back to showAuth
+        });
+
+        // --- FORM TOGGLE ---
+        switchToSignupBtn.addEventListener('click', () => {
+            loginForm.classList.add('hidden');
+            signupForm.classList.remove('hidden');
+            authError.classList.add('hidden');
+            signupError.classList.add('hidden');
+        });
+        
+        switchToLoginBtn.addEventListener('click', () => {
+            signupForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+            authError.classList.add('hidden');
+            signupError.classList.add('hidden');
         });
     </script>
 
@@ -619,206 +705,262 @@
                 { title: "Three Little Birds", artist: "Bob Marley", key: "A Major", progression: ["A Major", "D Major", "E Major"] },
                 { title: "No Woman, No Cry", artist: "Bob Marley", key: "C Major", progression: ["C Major", "G Major", "A Minor", "F Major"] },
                 { title: "Hallelujah", artist: "Leonard Cohen", key: "C Major", progression: ["C Major", "G Major", "A Minor", "F Major"] },
-                { title: "Africa", artist: "Toto", key: "B♭ Major", progression: ["B♭ Major", "G Minor", "E♭ Major", "F Major"] },
-                { title: "Sweet Caroline", artist: "Neil Diamond", key: "D Major", progression: ["D Major", "G Major", "A Major"] },
-                { title: "Imagine", artist: "John Lennon", key: "C Major", progression: ["C Major", "F Major", "G Major"] },
+                { title: "Imagine", artist: "John Lennon", key: "C Major", progression: ["C Major", "G Major", "F Major", "C Major"] },
+                { title: "With or Without You", artist: "U2", key: "D Major", progression: ["D Major", "A Major", "B Minor", "G Major"] },
+                { title: "Sweet Caroline", artist: "Neil Diamond", key: "G Major", progression: ["G Major", "D Major", "E Minor", "C Major"] },
             ];
 
-            // --- 2. GLOBAL STATE & UI ELEMENTS ---
+            // --- 2. GLOBAL STATE ---
             let currentRootNote = 'C';
             let currentChordType = 'Major';
             let currentInversion = 0;
             let currentBaseOctave = 4;
-            let useSharps = true;
-            let synth = null;
-            let isPlaying = false; 
+            let currentMode = 'sharps';
+            let currentPlayMode = 'simultaneous';
+            let activeNotes = []; 
 
             // Metronome State
-            let metronome = null;
-            let metronomeBPM = 120;
+            let metronomeRunning = false;
             let metronomeTone = 'sine';
-            let metronomeIndicator = null;
-            let isMetroRunning = false;
+            let metronomeBPM = 120;
+            let metronomeIntervalId = null;
+            let beatNumber = 0;
+
+            // Tone.js Setup
+            const synth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: 'sine' },
+                envelope: {
+                    attack: 0.02,
+                    decay: 0.1,
+                    sustain: 0.3,
+                    release: 1,
+                },
+            }).toDestination();
             
-            // UI elements
+            // Metronome Tone.js Setup
+            let metroSynth = new Tone.MembraneSynth().toDestination();
+            let clickVolume = new Tone.Volume(-10).toDestination();
+
+            // --- 3. UI ELEMENT REFERENCES ---
+            const pianoKeyboard = document.getElementById('piano-keyboard');
             const rootNoteSelect = document.getElementById('root-note');
             const chordTypeSelect = document.getElementById('chord-type');
             const inversionSelect = document.getElementById('inversion');
             const baseOctaveSelect = document.getElementById('base-octave');
             const playModeSelect = document.getElementById('play-mode');
-            const sharpsBtn = document.getElementById('sharps-btn');
-            const flatsBtn = document.getElementById('flats-btn');
+            const chordNameDisplay = document.getElementById('chord-name');
+            const chordNotesDisplay = document.getElementById('chord-notes');
             const playBtn = document.getElementById('play-btn');
             const stopBtn = document.getElementById('stop-btn');
             const downloadBtn = document.getElementById('download-btn');
-            const chordNameDisplay = document.getElementById('chord-name');
-            const chordNotesDisplay = document.getElementById('chord-notes');
-            const pianoKeyboard = document.getElementById('piano-keyboard');
-            
-            // View Selector
+            const sharpsBtn = document.getElementById('sharps-btn');
+            const flatsBtn = document.getElementById('flats-btn');
             const viewSelector = document.getElementById('view-selector');
-            const chordView = document.getElementById('chord-view');
-            const metronomeView = document.getElementById('metronome-view');
-            const songsView = document.getElementById('songs-view');
-            const resourcesView = document.getElementById('resources-view');
+            const views = {
+                'chord-view': document.getElementById('chord-view'),
+                'songs-view': document.getElementById('songs-view'),
+                'metronome-view': document.getElementById('metronome-view'),
+                'resources-view': document.getElementById('resources-view')
+            };
+            const songsList = document.getElementById('songs-list');
             
             // Metronome UI
-            const bpmInput = document.getElementById('bpm-input-metro');
-            const bpmSlider = document.getElementById('bpm-slider-metro');
+            const bpmInputMetro = document.getElementById('bpm-input-metro');
+            const bpmSliderMetro = document.getElementById('bpm-slider-metro');
             const metroStartBtn = document.getElementById('metro-start-btn');
             const metroStopBtn = document.getElementById('metro-stop-btn');
+            const metronomeIndicator = document.getElementById('metronome-indicator');
             const metroToneSelect = document.getElementById('metro-tone-select');
-            metronomeIndicator = document.getElementById('metronome-indicator');
-
-            // Song List UI
-            const songsList = document.getElementById('songs-list');
 
             // Resource UI
             const resourceQueryInput = document.getElementById('resource-query-input');
             const resourceGenerateBtn = document.getElementById('resource-generate-btn');
+            const resourceOutputCard = document.getElementById('resource-output-card');
             const resourceLoading = document.getElementById('resource-loading');
             const resourceContent = document.getElementById('resource-content');
             const initialMessage = document.getElementById('initial-message');
+
+            // --- 4. CORE MUSIC LOGIC ---
             
+            // Converts a note name (e.g., C#4) to its MIDI number
+            const noteToMidi = (note) => {
+                const notePart = note.slice(0, -1);
+                const octave = parseInt(note.slice(-1), 10);
+                const noteIndex = NOTES.indexOf(notePart);
+                if (noteIndex === -1) return null;
+                return 12 + (octave * 12) + noteIndex;
+            };
 
-            // --- 3. CORE MUSIC FUNCTIONS ---
+            // Converts a MIDI number to a note name (e.g., 60 to C4)
+            const midiToNote = (midi) => {
+                const noteIndex = (midi - 12) % 12;
+                const octave = Math.floor((midi - 12) / 12);
+                const noteName = NOTES[noteIndex];
+                return `${noteName}${octave}`;
+            };
 
-            // Converts a note (e.g., 'C#', 'Db') to its display name based on the current accidental preference
-            function getDisplayNote(note) {
-                if (useSharps) {
+            // Calculates the notes in the current chord, handles inversions
+            const getChordNotes = (rootNote, chordType, inversion) => {
+                const rootIndex = NOTES.indexOf(rootNote);
+                if (rootIndex === -1 || !CHORD_FORMULAS[chordType]) return [];
+
+                const formula = CHORD_FORMULAS[chordType];
+                const baseMidi = noteToMidi(`${rootNote}${currentBaseOctave}`);
+
+                let midiNotes = formula.map(semitone => baseMidi + semitone);
+
+                // Handle Inversions (Rotate the notes)
+                for (let i = 0; i < inversion; i++) {
+                    // Take the bottom note, move it up an octave (12 semitones)
+                    const bottomNoteMidi = midiNotes.shift();
+                    midiNotes.push(bottomNoteMidi + 12);
+                }
+
+                // Ensure notes are unique (important for complex chords/voicings)
+                midiNotes = [...new Set(midiNotes)];
+
+                // Convert back to note names
+                const noteNames = midiNotes.map(midiToNote);
+
+                // Format the notes for display (sharps vs flats)
+                const displayNames = noteNames.map(note => {
+                    const name = note.slice(0, -1);
+                    const octave = note.slice(-1);
+                    if (currentMode === 'flats' && SHARP_TO_FLAT[name]) {
+                        return SHARP_TO_FLAT[name] + octave;
+                    }
                     return note;
-                } else {
-                    return SHARP_TO_FLAT[note] || note;
-                }
-            }
+                });
+                
+                // Update global state for active notes
+                activeNotes = noteNames; 
+                
+                return { 
+                    midi: midiNotes, 
+                    display: displayNames.join(' - '),
+                    name: `${displayNames[0].slice(0, -1)} ${chordType}` 
+                };
+            };
             
-            // Creates the list of all available notes (C, C#, D, Db, etc.) for the dropdown
-            function getSelectNoteList() {
-                const list = [];
-                // Standard notes (C, D, E, F, G, A, B)
-                WHITE_NOTES_OCTAVE.forEach(note => list.push(note));
-                
-                // Black notes: add based on accidental preference
-                if (useSharps) {
-                    ['C#', 'D#', 'F#', 'G#', 'A#'].forEach(note => list.push(note));
-                } else {
-                    ['Db', 'Eb', 'Gb', 'Ab', 'Bb'].forEach(note => list.push(note));
-                }
-                
-                // Sort for better display, putting standard notes first
-                return list.sort((a, b) => {
-                    const aIsFlat = a.length > 1 && a.includes('b');
-                    const bIsFlat = b.length > 1 && b.includes('b');
-                    if (aIsFlat === bIsFlat) {
-                        return a.localeCompare(b);
-                    }
-                    return aIsFlat ? 1 : -1; // Flats last
-                });
-            }
+            // Stops all currently playing notes
+            window.stopChord = () => {
+                synth.releaseAll();
+                Tone.Transport.stop();
+            };
 
-            // Calculates the notes that make up the current chord and returns them as an array of full MIDI notes (e.g., ['C4', 'E4', 'G4'])
-            function getChordNotes() {
-                const rootIndex = NOTES.indexOf(useSharps ? currentRootNote : FLAT_TO_SHARP[currentRootNote] || currentRootNote);
-                if (rootIndex === -1) return [];
-
-                const formula = CHORD_FORMULAS[currentChordType];
-                if (!formula) return [];
-
-                let midiNotes = formula.map(interval => {
-                    return (rootIndex + interval);
-                });
-
-                // Apply inversion
-                if (currentInversion > 0 && midiNotes.length > 1) {
-                    for (let i = 0; i < currentInversion; i++) {
-                        // Move the lowest note up an octave (12 semitones)
-                        midiNotes.push(midiNotes.shift() + 12);
-                    }
-                }
+            // Plays the calculated chord
+            const playChord = () => {
+                stopChord(); // Stop any previous playback
                 
-                // Convert to full Tone.js note names (e.g., C4)
-                const baseNoteIndex = NOTES.indexOf('C');
-                const startMidiOctave = currentBaseOctave * 12 + NOTES.indexOf('C');
-                
-                return midiNotes.map(midiStep => {
-                    const octave = currentBaseOctave + Math.floor((midiStep - baseNoteIndex) / 12);
-                    const noteName = NOTES[midiStep % 12];
-                    return `${noteName}${octave}`;
-                });
-            }
+                if (activeNotes.length === 0) return;
 
-            // Initializes and plays the current chord
-            window.playChord = function() {
-                if (isPlaying) return;
-                
-                Tone.start().then(() => {
-                    if (!synth) {
-                        // Use a PolySynth for multiple notes, with a classic EPiano sound
-                        synth = new Tone.PolySynth(Tone.Sampler, {
-                            urls: {
-                                C4: "https://tonejs.github.io/audio/salamander/C4.mp3",
-                                "D#4": "https://tonejs.github.io/audio/salamander/Ds4.mp3",
-                                "F#4": "https://tonejs.github.io/audio/salamander/Fs4.mp3",
-                                A4: "https://tonejs.github.io/audio/salamander/A4.mp3",
-                            },
-                            release: 1,
-                            baseUrl: "https://tonejs.github.io/audio/salamander/",
-                        }).toDestination();
-                        synth.volume.value = -10; // Keep volume reasonable
-                    }
-                    
-                    const notesToPlay = getChordNotes();
-                    if (notesToPlay.length === 0) return;
-                    
-                    isPlaying = true;
-                    playBtn.textContent = 'Playing...';
-                    
+                if (currentPlayMode === 'simultaneous') {
+                    // Play all notes at once
+                    synth.triggerAttackRelease(activeNotes, '2n');
+                } else if (currentPlayMode === 'arpeggiated') {
+                    // Play notes sequentially (arpeggio)
                     const now = Tone.now();
-                    const mode = playModeSelect.value;
-                    
-                    if (mode === 'simultaneous') {
-                        synth.triggerAttackRelease(notesToPlay, '2n', now);
-                    } else if (mode === 'arpeggiated') {
-                        const duration = '8n';
-                        notesToPlay.forEach((note, index) => {
-                            synth.triggerAttackRelease(note, duration, now + index * Tone.Time(duration).toSeconds() * 1.5);
-                        });
-                    }
+                    const duration = 0.1; // Duration of each note
+                    const delay = 0.15; // Delay between notes
 
-                    // A short timeout to reset the button state after the longest possible duration (2 seconds for '2n' or the end of arpeggio)
-                    setTimeout(() => {
-                        if (isPlaying) {
-                            isPlaying = false;
-                            playBtn.textContent = 'Play Chord';
-                        }
-                    }, 2500); 
-                }).catch(e => console.error("Tone.js start error:", e));
-            }
-
-            window.stopChord = function() {
-                if (synth) {
-                    synth.releaseAll();
-                    isPlaying = false;
-                    playBtn.textContent = 'Play Chord';
+                    activeNotes.forEach((note, index) => {
+                        synth.triggerAttackRelease(note, duration, now + index * delay);
+                    });
                 }
-            }
+            };
 
+            // --- 5. UI GENERATION ---
+            
+            // Renders the virtual piano keyboard
+            const renderKeyboard = () => {
+                pianoKeyboard.innerHTML = '';
+                const totalNotes = NUM_OCTAVES * 12;
+                
+                let whiteNoteCounter = 0;
+                let blackNoteCounter = 0;
+                
+                for (let i = 0; i < totalNotes; i++) {
+                    const noteIndex = i % 12;
+                    const octave = START_OCTAVE + Math.floor(i / 12);
+                    const noteName = NOTES[noteIndex];
+                    const fullNote = noteName + octave;
+                    
+                    const isWhite = [0, 2, 4, 5, 7, 9, 11].includes(noteIndex);
+                    
+                    if (isWhite) {
+                        // White Key
+                        const keyElement = document.createElement('div');
+                        keyElement.className = 'key white flex-shrink-0';
+                        keyElement.dataset.note = noteName;
+                        keyElement.dataset.fullnote = fullNote;
+                        keyElement.addEventListener('mousedown', () => pressKey(keyElement, true));
+                        keyElement.addEventListener('mouseup', () => releaseKey(keyElement, true));
+                        keyElement.addEventListener('touchstart', (e) => { e.preventDefault(); pressKey(keyElement, true); });
+                        keyElement.addEventListener('touchend', (e) => { e.preventDefault(); releaseKey(keyElement, true); });
 
-            // --- 4. UI RENDER FUNCTIONS ---
-
-            // Populates the Root Note and Chord Type dropdowns
-            function populateSelects() {
-                // 1. Root Note Select
+                        const label = document.createElement('span');
+                        label.className = 'key-label white-label';
+                        label.textContent = noteName;
+                        keyElement.appendChild(label);
+                        
+                        pianoKeyboard.appendChild(keyElement);
+                        whiteNoteCounter++;
+                        
+                        // Add a placeholder for a black key (if needed)
+                        if (noteName !== 'E' && noteName !== 'B') {
+                            const blackKeySpacer = document.createElement('div');
+                            blackKeySpacer.className = 'key black-spacer'; // invisible spacer
+                            keyElement.appendChild(blackKeySpacer);
+                        }
+                    } else {
+                        // Black Key (positioned relative to the *previous* white key)
+                        const previousWhiteKey = pianoKeyboard.lastElementChild;
+                        if (previousWhiteKey) {
+                            const blackKeyElement = document.createElement('div');
+                            blackKeyElement.className = 'key black flex-shrink-0';
+                            blackKeyElement.dataset.note = noteName;
+                            blackKeyElement.dataset.fullnote = fullNote;
+                            
+                            const leftOffset = blackNoteCounter % 5 === 2 ? 'left-[0rem]' : 'left-[2.5rem]'; // Positioning logic for C# D# / F# G# A# groups
+                            blackKeyElement.style.marginLeft = '-1rem'; // Correct initial overlap
+                            
+                            blackKeyElement.addEventListener('mousedown', () => pressKey(blackKeyElement, true));
+                            blackKeyElement.addEventListener('mouseup', () => releaseKey(blackKeyElement, true));
+                            blackKeyElement.addEventListener('touchstart', (e) => { e.preventDefault(); pressKey(blackKeyElement, true); });
+                            blackKeyElement.addEventListener('touchend', (e) => { e.preventDefault(); releaseKey(blackKeyElement, true); });
+                            
+                            const label = document.createElement('span');
+                            label.className = 'key-label black-label';
+                            label.textContent = currentMode === 'sharps' ? noteName : SHARP_TO_FLAT[noteName];
+                            blackKeyElement.appendChild(label);
+                            
+                            previousWhiteKey.appendChild(blackKeyElement);
+                            blackNoteCounter++;
+                        }
+                    }
+                }
+            };
+            
+            // Fills the dropdowns with options
+            const populateDropdowns = () => {
+                // Populate Root Note Select
                 rootNoteSelect.innerHTML = '';
-                getSelectNoteList().forEach(note => {
+                let notesArray = [...NOTES]; // Start with sharps
+                
+                if (currentMode === 'flats') {
+                    // Use flat names where applicable
+                    notesArray = notesArray.map(note => SHARP_TO_FLAT[note] || note);
+                }
+                
+                notesArray.forEach(note => {
                     const option = document.createElement('option');
-                    option.value = note;
-                    option.textContent = note;
+                    option.value = note.length === 2 ? (FLAT_TO_SHARP[note] || note) : note; // Value is always the sharp/natural version for internal logic
+                    option.textContent = note; // Display the sharp or flat version
                     rootNoteSelect.appendChild(option);
                 });
-                rootNoteSelect.value = currentRootNote; // Re-select current note
-
-                // 2. Chord Type Select
+                rootNoteSelect.value = currentRootNote; // Set the current state
+                
+                // Populate Chord Type Select
                 chordTypeSelect.innerHTML = '';
                 Object.keys(CHORD_FORMULAS).forEach(type => {
                     const option = document.createElement('option');
@@ -827,542 +969,390 @@
                     chordTypeSelect.appendChild(option);
                 });
                 chordTypeSelect.value = currentChordType;
+            };
 
-                // 3. Inversion Select
-                updateInversionSelect();
-            }
-
-            // Updates inversion options based on the current chord formula length
-            function updateInversionSelect() {
-                inversionSelect.innerHTML = '';
-                const formulaLength = CHORD_FORMULAS[currentChordType] ? CHORD_FORMULAS[currentChordType].length : 3;
-                
-                // Max inversions is formulaLength - 1
-                for (let i = 0; i < formulaLength; i++) {
-                    const option = document.createElement('option');
-                    option.value = i;
-                    
-                    let label = `${i}-th Inversion`;
-                    if (i === 0) label = 'Root Position';
-                    else if (i === 1) label = '1st Inversion';
-                    else if (i === 2) label = '2nd Inversion';
-                    
-                    option.textContent = label;
-                    inversionSelect.appendChild(option);
-                }
-                
-                // Reset inversion if current value is out of bounds
-                if (currentInversion >= formulaLength) {
-                    currentInversion = 0;
-                }
-                inversionSelect.value = currentInversion;
-            }
-
-            // Draws the piano keyboard and highlights the current chord notes
-            function renderKeyboard() {
-                pianoKeyboard.innerHTML = '';
-                
-                const highlightedNotes = getChordNotes();
-                const pianoContainerWidth = (WHITE_NOTES_OCTAVE.length * NUM_OCTAVES) * 3.5 * 16 + 10; // Base width calculation
-
-                // Set min-width based on 3.5rem (56px) white keys
-                pianoKeyboard.style.minWidth = `${pianoContainerWidth}px`; 
-
-                let currentNoteIndex = NOTES.indexOf('C'); // Start at C
-                
-                for (let oct = START_OCTAVE; oct < START_OCTAVE + NUM_OCTAVES; oct++) {
-                    for (let i = 0; i < WHITE_NOTES_OCTAVE.length; i++) {
-                        const whiteNoteName = WHITE_NOTES_OCTAVE[i];
-                        const fullNoteName = `${whiteNoteName}${oct}`;
-                        
-                        // Check if the white note is a part of the chord
-                        const isWhiteHighlighted = highlightedNotes.includes(fullNoteName);
-                        
-                        const whiteKey = document.createElement('div');
-                        whiteKey.className = `key white relative ${isWhiteHighlighted ? 'highlighted' : ''}`;
-                        whiteKey.setAttribute('data-note', whiteNoteName);
-                        whiteKey.setAttribute('data-full-note', fullNoteName);
-                        
-                        // Label for white key
-                        const whiteLabel = document.createElement('span');
-                        whiteLabel.className = 'key-label white-label';
-                        whiteLabel.textContent = whiteNoteName;
-                        whiteKey.appendChild(whiteLabel);
-
-                        // Attach listeners to play notes on click/touch
-                        whiteKey.addEventListener('click', () => playSingleNote(fullNoteName));
-                        whiteKey.addEventListener('touchstart', (e) => { e.preventDefault(); playSingleNote(fullNoteName); whiteKey.classList.add('pressed'); });
-                        whiteKey.addEventListener('touchend', (e) => { e.preventDefault(); whiteKey.classList.remove('pressed'); });
-
-                        
-                        // Check if a black key follows this white key (not E or B)
-                        if (whiteNoteName !== 'E' && whiteNoteName !== 'B') {
-                            const sharpNote = NOTES[(currentNoteIndex + 1) % 12];
-                            const fullSharpNoteName = `${sharpNote}${oct}`;
-                            
-                            // Get the display name for the sharp/flat note
-                            const displayBlackNote = getDisplayNote(sharpNote);
-                            
-                            // Check if the black note is a part of the chord
-                            const isBlackHighlighted = highlightedNotes.includes(fullSharpNoteName);
-                            
-                            const blackKey = document.createElement('div');
-                            blackKey.className = `key black absolute ${isBlackHighlighted ? 'highlighted' : ''}`;
-                            blackKey.setAttribute('data-note', sharpNote);
-                            blackKey.setAttribute('data-full-note', fullSharpNoteName);
-                            
-                            // Label for black key
-                            const blackLabel = document.createElement('span');
-                            blackLabel.className = 'key-label black-label';
-                            blackLabel.textContent = displayBlackNote;
-                            blackKey.appendChild(blackLabel);
-
-                            // Attach listeners to play notes on click/touch
-                            blackKey.addEventListener('click', (e) => { e.stopPropagation(); playSingleNote(fullSharpNoteName); });
-                            blackKey.addEventListener('touchstart', (e) => { e.preventDefault(); e.stopPropagation(); playSingleNote(fullSharpNoteName); blackKey.classList.add('pressed'); });
-                            blackKey.addEventListener('touchend', (e) => { e.preventDefault(); e.stopPropagation(); blackKey.classList.remove('pressed'); });
-
-                            whiteKey.appendChild(blackKey);
-                            currentNoteIndex = (currentNoteIndex + 2) % 12; // Next white note
-                        } else {
-                             currentNoteIndex = (currentNoteIndex + 1) % 12; // Next white note
-                        }
-                        
-                        pianoKeyboard.appendChild(whiteKey);
-                    }
-                }
-            }
-            
-            // Updates the display information below the keyboard
-            function renderChordInfo() {
-                const notes = getChordNotes();
-                const displayNotes = notes.map(note => getDisplayNote(note.slice(0, -1)) + note.slice(-1));
-                
-                chordNameDisplay.textContent = `${getDisplayNote(currentRootNote)} ${currentChordType}`;
-                chordNotesDisplay.textContent = displayNotes.join(' - ');
-                
-                // Update inversion name (for non-root inversions)
-                if (currentInversion > 0 && inversionSelect.options.length > currentInversion) {
-                    chordNameDisplay.textContent += ` (${inversionSelect.options[currentInversion].textContent})`;
-                }
-
-                renderKeyboard();
-            }
-
-            // Function to generate and render the song list
-            function renderSongList() {
+            // Renders the chord progression list for the songs view
+            const renderSongsList = () => {
                 songsList.innerHTML = '';
+                
                 SIMPLE_SONGS.forEach(song => {
-                    const songCard = document.createElement('div');
-                    songCard.className = 'p-4 bg-gray-700 rounded-xl shadow-lg border border-gray-600';
+                    const songDiv = document.createElement('div');
+                    songDiv.className = 'bg-gray-700 p-5 rounded-xl shadow-lg border-l-4 border-secondary-pink';
                     
-                    songCard.innerHTML = `
-                        <h3 class="text-xl font-bold text-accent-yellow">${song.title} <span class="text-sm text-gray-400 font-normal">by ${song.artist}</span></h3>
-                        <p class="text-gray-300 mt-1 mb-3">Key: ${song.key}</p>
-                        <div class="flex flex-wrap gap-2" id="progression-${song.title.replace(/\s/g, '-')}">
-                        </div>
-                    `;
+                    const titleHeader = document.createElement('h3');
+                    titleHeader.className = 'text-xl font-bold text-white mb-2';
+                    titleHeader.textContent = `${song.title} - ${song.artist} (Key of ${song.key})`;
+                    songDiv.appendChild(titleHeader);
                     
-                    const progressionContainer = songCard.querySelector(`#progression-${song.title.replace(/\s/g, '-')}`);
+                    const progressionContainer = document.createElement('div');
+                    progressionContainer.className = 'flex flex-wrap gap-2 mt-3';
                     
-                    song.progression.forEach(chordString => {
+                    song.progression.forEach(chord => {
                         const chordChip = document.createElement('span');
-                        chordChip.className = 'px-3 py-1 bg-secondary-pink/70 text-white text-sm font-semibold rounded-full cursor-pointer hover:bg-secondary-pink transition-colors duration-150 shadow-md';
-                        chordChip.textContent = chordString;
+                        chordChip.className = 'bg-primary-teal hover:bg-teal-600 text-gray-900 font-semibold px-3 py-1 rounded-full cursor-pointer transition-colors duration-200 shadow-md';
+                        chordChip.textContent = chord;
+                        chordChip.dataset.chord = chord;
                         
+                        // Click handler to switch view and display/play the chord
                         chordChip.addEventListener('click', () => {
-                            // Parse the chord string (e.g., "C Major")
-                            const parts = chordString.split(' ');
-                            let root = parts[0];
-                            let type = parts.slice(1).join(' ');
+                            const [rootName, ...typeParts] = chord.split(' ');
+                            const chordType = typeParts.join(' ') || 'Major';
                             
-                            // Adjust for flat roots if necessary
-                            if (root.includes('b')) {
-                                // Temporarily switch to flats display
-                                if (useSharps) {
-                                    useSharps = false;
-                                    sharpsBtn.classList.remove('bg-primary-teal', 'text-gray-900');
-                                    flatsBtn.classList.add('bg-primary-teal', 'text-gray-900');
-                                }
-                            } else if (root.includes('#')) {
-                                // Temporarily switch to sharps display
-                                if (!useSharps) {
-                                    useSharps = true;
-                                    flatsBtn.classList.remove('bg-primary-teal', 'text-gray-900');
-                                    sharpsBtn.classList.add('bg-primary-teal', 'text-gray-900');
-                                }
-                            }
-                            
-                            // Update global state and UI
-                            currentRootNote = root;
-                            currentChordType = type || 'Major'; // Default to Major if not specified (e.g. just "C")
+                            // Update global state
+                            currentRootNote = FLAT_TO_SHARP[rootName] || rootName;
+                            currentChordType = chordType;
                             currentInversion = 0;
                             
-                            // Navigate to the Chord View
+                            // Update UI elements
+                            populateDropdowns();
+                            chordTypeSelect.value = currentChordType;
+                            inversionSelect.value = 0;
+                            
+                            updateChordDisplay();
                             viewSelector.value = 'chord-view';
-                            viewSelector.dispatchEvent(new Event('change'));
-                            
-                            // Re-render UI
-                            populateSelects();
-                            renderChordInfo();
-                            
-                            // Play the chord
+                            switchView('chord-view');
                             playChord();
                         });
                         
                         progressionContainer.appendChild(chordChip);
                     });
                     
-                    songsList.appendChild(songCard);
+                    songDiv.appendChild(progressionContainer);
+                    songsList.appendChild(songDiv);
                 });
-            }
+            };
 
-
-            // --- 5. EVENT HANDLERS ---
+            // --- 6. UI UPDATES & EVENT HANDLERS ---
             
-            // Single note player utility (used by keyboard clicks)
-            function playSingleNote(fullNote) {
-                Tone.start().then(() => {
-                    if (!synth) {
-                        // Use a PolySynth for multiple notes, with a classic EPiano sound
-                        synth = new Tone.PolySynth(Tone.Sampler, {
-                            urls: {
-                                C4: "https://tonejs.github.io/audio/salamander/C4.mp3",
-                                "D#4": "https://tonejs.github.io/audio/salamander/Ds4.mp3",
-                                "F#4": "https://tonejs.github.io/audio/salamander/Fs4.mp3",
-                                A4: "https://tonejs.github.io/audio/salamander/A4.mp3",
-                            },
-                            release: 1,
-                            baseUrl: "https://tonejs.github.io/audio/salamander/",
-                        }).toDestination();
-                        synth.volume.value = -10; // Keep volume reasonable
+            // Updates the piano display and the chord info text
+            const updateChordDisplay = () => {
+                stopChord(); // Stop audio on setting change
+                
+                // Recalculate notes
+                const result = getChordNotes(currentRootNote, currentChordType, currentInversion);
+                
+                // Update text displays
+                chordNameDisplay.textContent = result.name;
+                chordNotesDisplay.textContent = result.display;
+
+                // Update inversion dropdown based on formula length
+                inversionSelect.innerHTML = '';
+                const numNotes = CHORD_FORMULAS[currentChordType].length;
+                for(let i = 0; i < numNotes; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = i === 0 ? 'Root Position' : `${i}st Inversion`;
+                    inversionSelect.appendChild(option);
+                }
+                inversionSelect.value = currentInversion;
+
+                // Update keyboard highlights
+                document.querySelectorAll('#piano-keyboard .key').forEach(key => {
+                    key.classList.remove('highlighted');
+                });
+                
+                result.midi.forEach(midi => {
+                    const noteName = midiToNote(midi);
+                    const keyElement = document.querySelector(`[data-fullnote="${noteName}"]`);
+                    if (keyElement) {
+                        keyElement.classList.add('highlighted');
                     }
-                    synth.triggerAttackRelease(fullNote, '8n');
                 });
-            }
-
-            // Chord View Handlers
-            rootNoteSelect.addEventListener('change', (e) => {
-                currentRootNote = e.target.value;
-                renderChordInfo();
-            });
-
-            chordTypeSelect.addEventListener('change', (e) => {
-                currentChordType = e.target.value;
-                updateInversionSelect(); // Update inversions based on new chord type
-                currentInversion = parseInt(inversionSelect.value); // Reset or use new inversion
-                renderChordInfo();
-            });
+            };
             
-            inversionSelect.addEventListener('change', (e) => {
-                currentInversion = parseInt(e.target.value);
-                renderChordInfo();
-            });
-
-            baseOctaveSelect.addEventListener('change', (e) => {
-                currentBaseOctave = parseInt(e.target.value);
-                renderChordInfo();
-            });
-
-            sharpsBtn.addEventListener('click', () => {
-                if (!useSharps) {
-                    useSharps = true;
-                    sharpsBtn.classList.add('bg-primary-teal', 'text-gray-900');
-                    flatsBtn.classList.remove('bg-primary-teal', 'text-gray-900');
-                    // Reset root note display if it was a flat
-                    currentRootNote = FLAT_TO_SHARP[currentRootNote] || currentRootNote;
-                    populateSelects();
-                    renderChordInfo();
-                }
-            });
-
-            flatsBtn.addEventListener('click', () => {
-                if (useSharps) {
-                    useSharps = false;
-                    flatsBtn.classList.add('bg-primary-teal', 'text-gray-900');
-                    sharpsBtn.classList.remove('bg-primary-teal', 'text-gray-900');
-                    // Reset root note display if it was a sharp
-                    currentRootNote = SHARP_TO_FLAT[currentRootNote] || currentRootNote;
-                    populateSelects();
-                    renderChordInfo();
-                }
-            });
-
-            playBtn.addEventListener('click', playChord);
-            stopBtn.addEventListener('click', stopChord);
-            
-            downloadBtn.addEventListener('click', () => {
-                const element = document.getElementById('piano-keyboard');
-                const name = element.getAttribute('data-name');
-                const filename = `${name}_${chordNameDisplay.textContent.replace(/\s/g, '_')}.png`;
-
-                // Temporarily remove scrollbar before capturing
-                element.style.overflowX = 'hidden'; 
+            // Key press/release visual and audio feedback
+            const pressKey = (keyElement, playAudio = false) => {
+                if (keyElement.classList.contains('pressed')) return; // Avoid double press
                 
-                html2canvas(element, {
-                    scale: 2, // Capture at a higher resolution
-                    useCORS: true,
-                    backgroundColor: '#4b5563', // Set background to a visible gray (tailwind gray-600 equivalent)
-                }).then(canvas => {
-                    element.style.overflowX = 'scroll'; // Restore scrollbar
-                    const link = document.createElement('a');
-                    link.download = filename;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                }).catch(error => {
-                    console.error('Error during image capture:', error);
-                    element.style.overflowX = 'scroll'; // Restore scrollbar on error
-                });
-            });
+                keyElement.classList.add('pressed');
+                const fullNote = keyElement.dataset.fullnote;
 
-
-            // --- 6. METRONOME LOGIC ---
-            
-            function updateMetroBPM(value) {
-                metronomeBPM = parseInt(value);
-                bpmInput.value = metronomeBPM;
-                bpmSlider.value = metronomeBPM;
-            }
-
-            bpmInput.addEventListener('input', (e) => {
-                updateMetroBPM(e.target.value);
-                if (metronome) metronome.set({ tempo: metronomeBPM });
-            });
-            
-            bpmSlider.addEventListener('input', (e) => {
-                updateMetroBPM(e.target.value);
-                if (metronome) metronome.set({ tempo: metronomeBPM });
-            });
-
-            metroToneSelect.addEventListener('change', (e) => {
-                metronomeTone = e.target.value;
-            });
-            
-            window.stopMetronome = function() {
-                if (metronome) {
-                    Tone.Transport.stop();
-                    Tone.Transport.cancel(0); 
-                    metronome.dispose();
-                    metronome = null;
+                if (playAudio && fullNote) {
+                    synth.triggerAttack(fullNote);
                 }
-                isMetroRunning = false;
+            };
+
+            const releaseKey = (keyElement, stopAudio = false) => {
+                keyElement.classList.remove('pressed');
+                const fullNote = keyElement.dataset.fullnote;
+
+                if (stopAudio && fullNote) {
+                    synth.triggerRelease(fullNote);
+                }
+            };
+
+            // --- 7. METRONOME LOGIC ---
+            
+            window.stopMetronome = () => {
+                metronomeRunning = false;
+                if (metronomeIntervalId) {
+                    clearInterval(metronomeIntervalId);
+                    metronomeIntervalId = null;
+                }
+                beatNumber = 0;
                 metroStartBtn.textContent = 'Start';
-                metroStartBtn.classList.add('bg-accent-yellow', 'hover:bg-yellow-600');
-                metroStartBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600');
-                metroStopBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
-                metroStopBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
                 metronomeIndicator.classList.remove('metronome-active');
-            }
-
-            metroStopBtn.addEventListener('click', stopMetronome);
-
-            metroStartBtn.addEventListener('click', () => {
-                if (isMetroRunning) {
-                    stopMetronome();
-                    return;
-                }
                 
-                Tone.start().then(() => {
-                    stopMetronome(); // Ensure old loop is stopped
+                // Dispose and recreate to reset Tone.js if needed, or just stop the sound
+                metroSynth.releaseAll();
+            };
 
-                    metronome = new Tone.MembraneSynth({
-                        oscillator: { type: metronomeTone },
-                        envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.05 }
-                    }).toDestination();
-                    metronome.volume.value = -12; // Lower volume
+            const startMetronome = () => {
+                if (metronomeRunning) return;
+                
+                metronomeRunning = true;
+                metroStartBtn.textContent = 'Running...';
+                
+                // Update Tone.js synth for the selected tone
+                metroSynth.dispose();
+                metroSynth = new Tone.MembraneSynth({
+                    "envelope": {
+                        "attack": 0.005,
+                        "decay": 0.3,
+                        "sustain": 0,
+                    }
+                }).connect(clickVolume);
 
-                    Tone.Transport.bpm.value = metronomeBPM;
+                const intervalMs = (60 / metronomeBPM) * 1000;
 
-                    // Transport loop to create the beat
-                    Tone.Transport.scheduleRepeat(time => {
-                        metronome.triggerAttackRelease("C4", "8n", time);
-                        
-                        // Visual indicator update
-                        Tone.Draw.schedule(() => {
-                            metronomeIndicator.classList.add('metronome-active');
-                            setTimeout(() => {
-                                metronomeIndicator.classList.remove('metronome-active');
-                            }, 50); // Keep indicator active for a short duration
-                        }, time);
-                        
-                    }, "4n"); // Repeat every quarter note
+                const metronomeTick = () => {
+                    beatNumber++;
+                    const isDownbeat = beatNumber === 1;
 
-                    Tone.Transport.start();
-                    isMetroRunning = true;
+                    // Flash the indicator
+                    metronomeIndicator.classList.add('metronome-active');
+                    setTimeout(() => metronomeIndicator.classList.remove('metronome-active'), 50);
 
-                    metroStartBtn.textContent = 'Running';
-                    metroStartBtn.classList.remove('bg-accent-yellow', 'hover:bg-yellow-600');
-                    metroStartBtn.classList.add('bg-gray-500', 'hover:bg-gray-600');
-                    metroStopBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
-                    metroStopBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                    // Play sound
+                    const frequency = isDownbeat ? 800 : 500; // High pitch for downbeat
+                    metroSynth.triggerAttackRelease(frequency, '8n');
+                };
 
-                }).catch(e => console.error("Tone.js start error:", e));
-            });
+                // Start the loop
+                metronomeIntervalId = setInterval(metronomeTick, intervalMs);
+                metronomeTick(); // Initial tick
+            };
 
+            // --- 8. RESOURCE GENERATION LOGIC ---
 
-            // --- 7. GEMINI RESOURCE LOGIC ---
-
-            async function generateResource(query) {
+            const generateResource = async (query) => {
                 resourceGenerateBtn.disabled = true;
                 resourceGenerateBtn.textContent = 'Generating...';
                 initialMessage.classList.add('hidden');
                 resourceContent.classList.add('hidden');
                 resourceLoading.classList.remove('hidden');
 
-                const maxRetries = 3;
-                let lastError = null;
+                const userQuery = query;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    tools: [{ "google_search": {} }],
+                    systemInstruction: {
+                        parts: [{ text: SYSTEM_PROMPT }]
+                    },
+                };
                 
-                for (let attempt = 0; attempt < maxRetries; attempt++) {
-                    try {
-                        const payload = {
-                            contents: [{ parts: [{ text: query }] }],
-                            tools: [{ "google_search": {} }],
-                            systemInstruction: {
-                                parts: [{ text: SYSTEM_PROMPT }]
-                            },
-                        };
-
-                        const response = await fetch(API_URL, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-
-                        if (!response.ok) {
-                             throw new Error(`API call failed with status ${response.status}`);
-                        }
-
-                        const result = await response.json();
-                        const candidate = result.candidates?.[0];
-
-                        if (candidate && candidate.content?.parts?.[0]?.text) {
-                            const text = candidate.content.parts[0].text;
-                            
-                            // 1. Convert Markdown to HTML for display
-                            const html = convertMarkdownToHtml(text);
-                            
-                            // 2. Add resource citations
-                            let sources = [];
-                            const groundingMetadata = candidate.groundingMetadata;
-                            if (groundingMetadata && groundingMetadata.groundingAttributions) {
-                                sources = groundingMetadata.groundingAttributions
-                                    .map(attribution => ({
-                                        uri: attribution.web?.uri,
-                                        title: attribution.web?.title,
-                                    }))
-                                    .filter(source => source.uri && source.title);
+                const fetchWithRetry = async (url, options, maxRetries = 5) => {
+                    for (let i = 0; i < maxRetries; i++) {
+                        try {
+                            const response = await fetch(url, options);
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
                             }
-                            
-                            const citationHtml = sources.length > 0
-                                ? '<div class="mt-6 pt-4 border-t border-gray-600"><h4 class="text-sm font-bold text-gray-400 mb-2">Sources:</h4>' +
-                                  sources.map(s => `<p class="text-xs text-gray-500"><a href="${s.uri}" target="_blank" class="hover:text-primary-teal transition-colors">${s.title}</a></p>`).join('') +
-                                  '</div>'
-                                : '';
-
-                            resourceContent.innerHTML = `<div class="prose prose-invert max-w-none">${html}</div>${citationHtml}`;
-                            
-                            resourceLoading.classList.add('hidden');
-                            resourceContent.classList.remove('hidden');
-                            resourceGenerateBtn.disabled = false;
-                            resourceGenerateBtn.textContent = 'Generate Resource';
-                            return; 
-                        } else {
-                            throw new Error("API response was empty or malformed.");
-                        }
-                    } catch (error) {
-                        lastError = error;
-                        console.error(`Attempt ${attempt + 1} failed:`, error);
-                        if (attempt < maxRetries - 1) {
-                            // Exponential backoff
-                            await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+                            return response;
+                        } catch (error) {
+                            if (i === maxRetries - 1) throw error;
+                            const delay = Math.pow(2, i) * 1000;
+                            await new Promise(resolve => setTimeout(resolve, delay));
                         }
                     }
+                };
+
+                try {
+                    const response = await fetchWithRetry(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't generate a resource for that query.";
+                    
+                    // Convert basic markdown to HTML for presentation
+                    let htmlContent = text
+                        .replace(/^### (.*$)/gim, '<h3>$1</h3>') // Headings
+                        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                        .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>') // Bold
+                        .replace(/\* (.*)/gim, '<li>$1</li>'); // Lists
+
+                    // Wrap lists in <ul> or <ol> as needed (simple approach)
+                    htmlContent = htmlContent.replace(/(<li>.*<\/li>(\s*<li>.*<\/li>)*)/gims, '<ul>$1</ul>');
+
+                    resourceContent.innerHTML = `<div class="prose max-w-none text-gray-100">${htmlContent}</div>`;
+                    resourceContent.classList.remove('hidden');
+
+                } catch (error) {
+                    resourceContent.innerHTML = `<p class="text-red-400">An error occurred while generating the resource. Please try a different query or check your connection.</p>`;
+                    resourceContent.classList.remove('hidden');
+                    console.error("Gemini API Error:", error);
+                } finally {
+                    resourceLoading.classList.add('hidden');
+                    resourceGenerateBtn.disabled = false;
+                    resourceGenerateBtn.textContent = 'Generate Resource';
                 }
+            };
+            
+            // --- 9. INITIALIZATION & BINDINGS ---
+
+            const bindEventListeners = () => {
                 
-                // If all retries fail
-                resourceLoading.classList.add('hidden');
-                initialMessage.classList.remove('hidden');
-                initialMessage.textContent = `Error: Could not generate resource after multiple attempts. ${lastError ? lastError.message : ''}`;
-                resourceGenerateBtn.disabled = false;
-                resourceGenerateBtn.textContent = 'Generate Resource';
-            }
+                // Chord View Listeners
+                rootNoteSelect.addEventListener('change', (e) => {
+                    currentRootNote = e.target.value;
+                    updateChordDisplay();
+                });
 
-            // Simple Markdown to HTML converter (for basic formatting like headings, lists, bold)
-            function convertMarkdownToHtml(markdown) {
-                let html = markdown;
-                // Headings
-                html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-                html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-                html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-                // Bold
-                html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
-                // Lists (simple unordered)
-                html = html.replace(/^\* (.*$)/gim, '<li>$1</li>');
-                html = html.replace(/^(<li>.*<\/li>)$/s, '<ul>$1</ul>');
-                // Paragraphs (last)
-                html = html.replace(/([^\n])\n([^\n])/g, '$1<br>$2'); // Line breaks
-                html = html.replace(/\n\n/g, '</p><p>'); // Double line breaks for paragraphs
-                if (!html.startsWith('<p>')) html = '<p>' + html;
-                if (!html.endsWith('</p>')) html = html + '</p>';
-                return html;
-            }
+                chordTypeSelect.addEventListener('change', (e) => {
+                    currentChordType = e.target.value;
+                    currentInversion = 0; // Reset inversion when type changes
+                    updateChordDisplay();
+                });
 
-            resourceGenerateBtn.addEventListener('click', () => {
-                const query = resourceQueryInput.value.trim();
-                if (query) {
-                    generateResource(query);
-                }
-            });
-
-
-            // --- 8. VIEW SWITCHING & INITIALIZATION ---
-            
-            function switchView(viewId) {
-                chordView.classList.add('hidden');
-                metronomeView.classList.add('hidden');
-                songsView.classList.add('hidden');
-                resourcesView.classList.add('hidden');
+                inversionSelect.addEventListener('change', (e) => {
+                    currentInversion = parseInt(e.target.value, 10);
+                    updateChordDisplay();
+                });
                 
-                // Stop metronome and chords when switching away
-                if (isMetroRunning) stopMetronome();
-                if (isPlaying) stopChord();
+                baseOctaveSelect.addEventListener('change', (e) => {
+                    currentBaseOctave = parseInt(e.target.value, 10);
+                    renderKeyboard(); // Redraw keys for labels/notes
+                    updateChordDisplay();
+                });
+
+                playModeSelect.addEventListener('change', (e) => {
+                    currentPlayMode = e.target.value;
+                });
                 
-                switch (viewId) {
-                    case 'chord-view':
-                        chordView.classList.remove('hidden');
-                        break;
-                    case 'metronome-view':
-                        metronomeView.classList.remove('hidden');
-                        break;
-                    case 'songs-view':
-                        songsView.classList.remove('hidden');
-                        break;
-                    case 'resources-view':
-                        resourcesView.classList.remove('hidden');
-                        break;
-                }
-            }
+                playBtn.addEventListener('click', playChord);
+                stopBtn.addEventListener('click', stopChord);
+                
+                sharpsBtn.addEventListener('click', () => {
+                    currentMode = 'sharps';
+                    sharpsBtn.classList.add('bg-primary-teal', 'text-gray-900');
+                    sharpsBtn.classList.remove('hover:bg-primary-teal/50', 'text-white');
+                    flatsBtn.classList.remove('bg-primary-teal', 'text-gray-900');
+                    flatsBtn.classList.add('hover:bg-primary-teal/50', 'text-white');
+                    populateDropdowns();
+                    renderKeyboard();
+                    updateChordDisplay();
+                });
 
-            viewSelector.addEventListener('change', (e) => {
-                switchView(e.target.value);
-            });
+                flatsBtn.addEventListener('click', () => {
+                    currentMode = 'flats';
+                    flatsBtn.classList.add('bg-primary-teal', 'text-gray-900');
+                    flatsBtn.classList.remove('hover:bg-primary-teal/50', 'text-white');
+                    sharpsBtn.classList.remove('bg-primary-teal', 'text-gray-900');
+                    sharpsBtn.classList.add('hover:bg-primary-teal/50', 'text-white');
+                    populateDropdowns();
+                    renderKeyboard();
+                    updateChordDisplay();
+                });
+                
+                downloadBtn.addEventListener('click', () => {
+                    const element = document.getElementById('piano-keyboard');
+                    const fileName = `${chordNameDisplay.textContent.replace(/\s+/g, '_')}_Diagram.png`;
+                    
+                    html2canvas(element, { 
+                        backgroundColor: '#1f2937', // gray-800 background 
+                        useCORS: true 
+                    }).then(canvas => {
+                        const link = document.createElement('a');
+                        link.href = canvas.toDataURL('image/png');
+                        link.download = fileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    });
+                });
+                
+                // View Selector
+                viewSelector.addEventListener('change', (e) => {
+                    switchView(e.target.value);
+                });
+                
+                // Metronome Listeners
+                bpmInputMetro.addEventListener('input', (e) => {
+                    metronomeBPM = parseInt(e.target.value) || 120;
+                    bpmSliderMetro.value = metronomeBPM;
+                    if (metronomeRunning) {
+                        stopMetronome();
+                        startMetronome();
+                    }
+                });
 
+                bpmSliderMetro.addEventListener('input', (e) => {
+                    metronomeBPM = parseInt(e.target.value);
+                    bpmInputMetro.value = metronomeBPM;
+                    if (metronomeRunning) {
+                        stopMetronome();
+                        startMetronome();
+                    }
+                });
 
-            // --- 9. INITIAL RENDER ---
+                metroToneSelect.addEventListener('change', (e) => {
+                    metronomeTone = e.target.value;
+                    // Note: Tone is handled inside startMetronome for simplicity, but we could update volume here
+                });
+
+                metroStartBtn.addEventListener('click', startMetronome);
+                metroStopBtn.addEventListener('click', stopMetronome);
+
+                // Resource Listeners
+                resourceGenerateBtn.addEventListener('click', () => {
+                    const query = resourceQueryInput.value.trim();
+                    if (query) {
+                        generateResource(query);
+                    }
+                });
+                resourceQueryInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        resourceGenerateBtn.click();
+                    }
+                });
+            };
+
+            const switchView = (viewId) => {
+                Object.values(views).forEach(view => {
+                    view.classList.add('hidden');
+                });
+                views[viewId].classList.remove('hidden');
+            };
+
+            // Main setup function called on successful login
+            const setupApp = () => {
+                // Initial renders
+                populateDropdowns();
+                renderKeyboard();
+                updateChordDisplay();
+                renderSongsList(); // Render songs and bind their handlers
+
+                // Bind all primary event listeners
+                bindEventListeners();
+
+                // Initial view setup
+                switchView('chord-view');
+            };
             
-            // Populate select menus and render keyboard on initial app load
-            populateSelects();
-            renderChordInfo();
-            renderSongList();
+            // Overwrite the main initialization function
+            window.init = setupApp;
             
-            // Set initial view to Chord View
-            switchView(viewSelector.value);
-            
-            // Ensure Metronome UI matches initial state
-            updateMetroBPM(metronomeBPM);
-        };
-        // End of window.init
+            // Call setupApp to ensure all listeners are bound on first run if user is already logged in
+            setupApp(); 
+
+        }; 
+        // Note: window.init() is called by the Firebase auth listener on successful login
+
     </script>
 </body>
 </html>
