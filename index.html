@@ -300,6 +300,7 @@
                         <option value="songs-view">🎶 Simple Songs</option>
                         <option value="metronome-view">⏰ Metronome</option>
                         <option value="resources-view">📚 Resources & Tools</option>
+                        <option value="admin-view" id="admin-view-option" class="hidden">🔒 Admin Panel</option>
                     </select>
                 </div>
 
@@ -349,7 +350,6 @@
                         </div>
 
                         <div>
-                            <!-- FIX: Removed 'for="accidental-toggle"' as it labels a button group, not a single form element with that ID. -->
                             <label class="block text-sm font-medium text-gray-400 mb-1">Accidentals</label>
                             <div class="flex bg-gray-700 border border-gray-600 rounded-lg overflow-hidden shadow-md">
                                 <button id="sharps-btn" class="w-1/2 p-3 text-lg font-bold bg-primary-teal text-gray-900 transition-colors duration-200"># Sharps</button>
@@ -391,7 +391,7 @@
                 ---
                 
 
-                <section id="metronome-view">
+                <section id="metronome-view" class="hidden">
                     <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Metronome</h2>
                     <div class="flex flex-col lg:flex-row items-center justify-center gap-6 mb-8 p-6 bg-gray-700 rounded-xl shadow-lg flex-wrap">
                         
@@ -435,7 +435,7 @@
                 ---
                 
 
-                <section id="songs-view">
+                <section id="songs-view" class="hidden">
                     <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Simple Song Chord Progressions</h2>
                     
                     <p class="text-gray-300 mb-6">These popular songs use easy, repetitive chord sequences. Click any **chord chip** to instantly see and play that chord on the diagram page!</p>
@@ -449,7 +449,7 @@
                 ---
                 
 
-                <section id="resources-view">
+                <section id="resources-view" class="hidden">
                     <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Dynamic Learning Resources</h2>
                     
                     <p class="text-gray-300 mb-6">Ask me anything about music theory, technique, or history, and I will generate a comprehensive resource for you, grounded in up-to-date information.</p>
@@ -480,6 +480,16 @@
                         </div>
                     </div>
                 </section>
+
+                ---
+
+                <section id="admin-view" class="hidden">
+                    <h2 class="text-3xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Admin Panel: User Approval</h2>
+                    <p class="text-gray-400 mb-6">Use this panel to approve registered users once their payment has been verified. Approving sets <code class="bg-gray-700 text-primary-teal px-1 rounded">isPaid: true</code>.</p>
+                    <div id="users-awaiting-approval" class="space-y-4">
+                        <p class="text-primary-teal italic p-4 bg-gray-700 rounded-lg">Loading users...</p>
+                    </div>
+                </section>
             </div>
             <!-- END APPLICATION SECTION -->
 
@@ -495,7 +505,14 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // ADDED: collection, query, where, getDocs, updateDoc for Admin Panel Firestore interaction
+        import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- ADMIN CONFIGURATION ---
+        // IMPORTANT: REPLACE THIS UID WITH YOUR ACTUAL DEVELOPER UID.
+        // The user with this UID will see the Admin Panel.
+        const ADMIN_UID = 'YOUR_ADMIN_UID_HERE'; 
+        // --- END ADMIN CONFIGURATION ---
 
         // Global variables provided by the environment
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
@@ -537,12 +554,20 @@
         }, 3000); // 3 seconds
 
         // State function to show/hide content
-        const showApp = (user) => {
+        // UPDATED: Added isAdmin parameter and stored it globally for the main script
+        const showApp = (user, isAdmin = false) => {
             loadingMessage.classList.add('hidden');
             authSection.classList.add('hidden');
             appContent.classList.remove('hidden');
+            
+            // Set global variables for the main script
+            window.db = db;
+            window.appId = appId;
+            window.isAdmin = isAdmin;
+
             // Display email and full UID
-            userDisplay.innerHTML = `<span class="font-bold text-white">${user.email}</span> (ID: ${user.uid})`; 
+            userDisplay.innerHTML = `<span class="font-bold text-white">${user.email}</span> (ID: ${user.uid}${isAdmin ? ' <span class="text-accent-yellow">(ADMIN)</span>' : ''})`; 
+            
             // Re-run the main app initialization (if already defined)
             if (typeof window.init === 'function') {
                 window.init(); 
@@ -563,13 +588,15 @@
         // --- AUTH STATE LISTENER ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // User is signed in. Now check if they are a PAID user.
+                // User is signed in.
                 const userDocRef = doc(db, "artifacts", appId, "public", "users", user.uid);
                 const userDoc = await getDoc(userDocRef);
 
-                // Check if the user document exists AND the 'isPaid' flag is true
-                if (userDoc.exists() && userDoc.data().isPaid === true) {
-                    showApp(user);
+                const isAdmin = user.uid === ADMIN_UID;
+                
+                // Check if the user document exists AND the 'isPaid' flag is true OR if they are the admin
+                if ((userDoc.exists() && userDoc.data().isPaid === true) || isAdmin) {
+                    showApp(user, isAdmin);
                 } else {
                     // User is signed in but not yet approved (paid)
                     await signOut(auth);
@@ -601,7 +628,6 @@
         });
 
         // --- SIGNUP HANDLER ---
-        // Creates a Firebase Auth user AND a Firestore record awaiting approval.
         signupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             signupError.classList.add('hidden');
@@ -650,9 +676,8 @@
             if (typeof window.stopChord === 'function') window.stopChord();
             if (typeof window.stopMetronome === 'function') window.stopMetronome();
             await signOut(auth);
-            // The onAuthStateChanged listener will handle the UI switch back to showAuth
         });
-
+        
         // --- FORM TOGGLE ---
         switchToSignupBtn.addEventListener('click', () => {
             loginForm.classList.add('hidden');
@@ -674,6 +699,11 @@
     <script>
         // Place the entire original script content inside this function
         window.init = function() {
+            // Firestore global variables are set by the module script on successful login
+            const db = window.db;
+            const appId = window.appId;
+            const isAdmin = window.isAdmin;
+
             // --- 1. DATA DEFINITIONS ---
             
             const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -738,11 +768,18 @@
                 if (isAudioInitialized) return;
                 
                 try {
-                    await Tone.start();
+                    // Use a slightly different approach to access Tone in this script block
+                    const localTone = window.Tone || {}; 
+                    if (localTone.start) {
+                        await localTone.start();
+                    } else {
+                        console.error("Tone.js not available or not properly loaded.");
+                        return;
+                    }
                     console.log("Audio Context started successfully.");
 
                     // Initialize the instruments
-                    synth = new Tone.PolySynth(Tone.Synth, {
+                    synth = new localTone.PolySynth(localTone.Synth, {
                         oscillator: { type: 'sine' },
                         envelope: {
                             attack: 0.02,
@@ -752,8 +789,8 @@
                         },
                     }).toDestination();
                     
-                    clickVolume = new Tone.Volume(-10).toDestination();
-                    metroSynth = new Tone.MembraneSynth().connect(clickVolume);
+                    clickVolume = new localTone.Volume(-10).toDestination();
+                    metroSynth = new localTone.MembraneSynth().connect(clickVolume);
 
                     isAudioInitialized = true;
                 } catch (error) {
@@ -764,7 +801,7 @@
             // Stops all currently playing notes
             window.stopChord = () => {
                 if (synth) synth.releaseAll();
-                if (Tone.Transport) Tone.Transport.stop();
+                if (window.Tone && window.Tone.Transport) window.Tone.Transport.stop();
             };
 
             // --- 3. UI ELEMENT REFERENCES ---
@@ -782,11 +819,15 @@
             const sharpsBtn = document.getElementById('sharps-btn');
             const flatsBtn = document.getElementById('flats-btn');
             const viewSelector = document.getElementById('view-selector');
+            const adminViewOption = document.getElementById('admin-view-option'); // New element
+            const usersAwaitingApproval = document.getElementById('users-awaiting-approval'); // New element
+            
             const views = {
                 'chord-view': document.getElementById('chord-view'),
                 'songs-view': document.getElementById('songs-view'),
                 'metronome-view': document.getElementById('metronome-view'),
-                'resources-view': document.getElementById('resources-view')
+                'resources-view': document.getElementById('resources-view'),
+                'admin-view': document.getElementById('admin-view') // Added admin view
             };
             const songsList = document.getElementById('songs-list');
             
@@ -806,7 +847,7 @@
             const resourceContent = document.getElementById('resource-content');
             const initialMessage = document.getElementById('initial-message');
 
-            // --- 4. CORE MUSIC LOGIC ---
+            // --- 4. CORE MUSIC LOGIC (unchanged) ---
             
             // Converts a note name (e.g., C#4) to its MIDI number
             const noteToMidi = (note) => {
@@ -880,7 +921,7 @@
                     synth.triggerAttackRelease(activeNotes, '2n');
                 } else if (currentPlayMode === 'arpeggiated') {
                     // Play notes sequentially (arpeggio)
-                    const now = Tone.now();
+                    const now = window.Tone.now();
                     const duration = 0.1; // Duration of each note
                     const delay = 0.15; // Delay between notes
 
@@ -890,7 +931,7 @@
                 }
             };
 
-            // --- 5. UI GENERATION ---
+            // --- 5. UI GENERATION (unchanged) ---
             
             // Renders the virtual piano keyboard
             const renderKeyboard = () => {
@@ -1043,7 +1084,7 @@
                 });
             };
 
-            // --- 6. UI UPDATES & EVENT HANDLERS ---
+            // --- 6. UI UPDATES & EVENT HANDLERS (unchanged) ---
             
             // Updates the piano display and the chord info text
             const updateChordDisplay = () => {
@@ -1105,7 +1146,7 @@
                 }
             };
 
-            // --- 7. METRONOME LOGIC ---
+            // --- 7. METRONOME LOGIC (unchanged) ---
             
             window.stopMetronome = () => {
                 metronomeRunning = false;
@@ -1130,14 +1171,15 @@
                 await initializeAudio(); // Ensure audio context is running
 
                 if (!metroSynth) return;
+                const localTone = window.Tone; // Get Tone.js reference
+                if (!localTone || !localTone.Transport) return;
 
                 metronomeRunning = true;
                 metroStartBtn.textContent = 'Stop';
                 
                 // Update Tone.js synth for the selected tone
-                // Since metroSynth is already initialized, we just update the oscillator type for the click
                 metroSynth.dispose();
-                metroSynth = new Tone.MembraneSynth({
+                metroSynth = new localTone.MembraneSynth({
                     "oscillator": {
                         "type": metroToneSelect.value // Use the selected tone
                     },
@@ -1162,8 +1204,7 @@
                     const frequency = isDownbeat ? 800 : 500; // High pitch for downbeat
                     metroSynth.triggerAttackRelease(frequency, '8n');
                     
-                    // Reset beat number if needed (time signature logic can be added here)
-                    // For now, simple continuous beat:
+                    // Reset beat number if needed
                     if (beatNumber >= 4) beatNumber = 0; 
                 };
 
@@ -1172,7 +1213,7 @@
                 metronomeTick(); // Initial tick
             };
 
-            // --- 8. RESOURCE GENERATION LOGIC ---
+            // --- 8. RESOURCE GENERATION LOGIC (unchanged) ---
 
             const generateResource = async (query) => {
                 resourceGenerateBtn.disabled = true;
@@ -1241,7 +1282,93 @@
                 }
             };
             
-            // --- 9. INITIALIZATION & BINDINGS ---
+            // --- 9. ADMIN PANEL LOGIC (NEW) ---
+
+            // Handles the button click to set a user's isPaid flag to true
+            const approveUser = async (uid, email) => {
+                if (!db || !appId) return console.error("Firestore not initialized.");
+
+                const userDocRef = window.doc(db, "artifacts", appId, "public", "users", uid);
+                
+                // Temporarily disable button to prevent double-clicks
+                document.querySelector(`.approve-btn[data-uid="${uid}"]`).disabled = true;
+
+                try {
+                    await window.updateDoc(userDocRef, {
+                        isPaid: true
+                    });
+                    console.log(`User ${email} (${uid}) approved successfully.`);
+                    // Re-render the list to show the approved user is gone
+                    renderAdminView();
+                } catch (error) {
+                    console.error("Error approving user:", error);
+                    // Use a message box instead of alert()
+                    usersAwaitingApproval.innerHTML = `<p class="text-red-400 italic p-4 bg-gray-700 rounded-lg">Failed to approve user ${email}. Error: ${error.message}</p>`;
+                }
+            };
+
+
+            const renderAdminView = async () => {
+                if (!isAdmin) {
+                    usersAwaitingApproval.innerHTML = '<p class="text-red-400 italic p-4 bg-gray-700 rounded-lg">Access Denied. You are not the administrator.</p>';
+                    return;
+                }
+
+                usersAwaitingApproval.innerHTML = '<p class="text-primary-teal italic p-4 bg-gray-700 rounded-lg">Loading users...</p>';
+                
+                try {
+                    // Use global Firestore functions provided by the module script
+                    const usersCollectionRef = window.collection(db, "artifacts", appId, "public", "users");
+                    
+                    // Query for users where isPaid is explicitly false
+                    const q = window.query(usersCollectionRef, window.where("isPaid", "==", false));
+                    const querySnapshot = await window.getDocs(q);
+
+                    if (querySnapshot.empty) {
+                        usersAwaitingApproval.innerHTML = '<p class="text-accent-yellow italic p-4 bg-gray-700 rounded-lg">No users are currently awaiting approval.</p>';
+                        return;
+                    }
+
+                    usersAwaitingApproval.innerHTML = ''; // Clear loading message
+
+                    querySnapshot.forEach(doc => {
+                        const userData = doc.data();
+                        const uid = doc.id;
+                        
+                        const userCard = document.createElement('div');
+                        userCard.className = 'flex flex-col sm:flex-row items-center justify-between p-4 bg-gray-700 rounded-lg border border-gray-600 shadow-md';
+                        userCard.innerHTML = `
+                            <div class="mb-2 sm:mb-0">
+                                <p class="text-white font-semibold">${userData.email}</p>
+                                <p class="text-sm text-gray-400">UID: ${uid}</p>
+                                <p class="text-sm text-gray-400">Registered: ${new Date(userData.registeredAt).toLocaleDateString()}</p>
+                            </div>
+                            <button data-uid="${uid}" data-email="${userData.email}" class="approve-btn bg-primary-teal hover:bg-teal-600 text-gray-900 font-bold px-4 py-2 rounded-lg transition-colors duration-200 mt-2 sm:mt-0 w-full sm:w-auto">
+                                Approve User
+                            </button>
+                        `;
+                        usersAwaitingApproval.appendChild(userCard);
+                    });
+                    
+                    // Attach event listeners to the new buttons
+                    document.querySelectorAll('.approve-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const uid = e.target.dataset.uid;
+                            const email = e.target.dataset.email;
+                            if (uid && email) {
+                                approveUser(uid, email);
+                            }
+                        });
+                    });
+
+                } catch (error) {
+                    console.error("Error fetching users:", error);
+                    usersAwaitingApproval.innerHTML = `<p class="text-red-400 italic p-4 bg-gray-700 rounded-lg">Error fetching user data: ${error.message}</p>`;
+                }
+            };
+
+
+            // --- 10. INITIALIZATION & BINDINGS ---
 
             const bindEventListeners = () => {
                 
@@ -1350,7 +1477,6 @@
                 });
 
                 metroStartBtn.addEventListener('click', startMetronome);
-                // Note: The metronome stop button is already handled inside stopMetronome logic
                 metroStopBtn.addEventListener('click', stopMetronome);
 
 
@@ -1367,9 +1493,23 @@
                         resourceGenerateBtn.click();
                     }
                 });
+
+                // Admin View Listener (Conditional)
+                if (isAdmin) {
+                    viewSelector.addEventListener('change', (e) => {
+                        if (e.target.value === 'admin-view') {
+                            renderAdminView();
+                        }
+                    });
+                }
             };
 
             const switchView = (viewId) => {
+                // Stop metronome when switching away from it
+                if (viewId !== 'metronome-view' && metronomeRunning) {
+                    stopMetronome();
+                }
+
                 Object.values(views).forEach(view => {
                     view.classList.add('hidden');
                 });
@@ -1378,6 +1518,13 @@
 
             // Main setup function called on successful login
             const setupApp = () => {
+                // Admin Panel Setup: Only show the option to the admin
+                if (isAdmin) {
+                    adminViewOption.classList.remove('hidden');
+                } else {
+                    adminViewOption.classList.add('hidden');
+                }
+
                 // Initial renders
                 populateDropdowns();
                 renderKeyboard();
