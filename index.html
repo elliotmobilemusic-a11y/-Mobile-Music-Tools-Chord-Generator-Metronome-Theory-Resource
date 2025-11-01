@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Piano Chord Generator & Metronome</title>
-     <link rel="icon" href="/favicon.png" type="image/png">
     <!-- 1. Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -43,10 +42,10 @@
             font-family: 'Montserrat', 'sans-serif';
         }
 
-        /* White key styles */
+        /* White key styles - REDUCED SIZE FOR MOBILE */
         .key.white {
-            width: 3.5rem; 
-            height: 16rem;
+            width: 2.5rem; /* Reduced from 3.5rem */
+            height: 14rem; /* Reduced from 16rem */
             background-color: white;
             border: 2px solid #374151; /* gray-700 */
             border-top: 0;
@@ -69,17 +68,17 @@
             position: relative;
         }
 
-        /* Black key styles */
+        /* Black key styles - REDUCED SIZE FOR MOBILE */
         .key.black {
-            width: 2rem; 
-            height: 10rem;
+            width: 1.5rem; /* Reduced from 2rem */
+            height: 9rem; /* Reduced from 10rem */
             background-color: #1a202c; 
             border: 2px solid #111827; 
             border-bottom-width: 4px;
             border-radius: 0 0 6px 6px;
             position: absolute;
             top: 0;
-            right: -1rem; 
+            right: -0.75rem; /* Adjusted offset to match new width */
             z-index: 10;
             box-shadow: 0 2px 4px rgba(0,0,0,0.7);
             transition: background-color 0.1s, transform 0.05s;
@@ -270,7 +269,7 @@
                 <div class="flex flex-wrap justify-center gap-4 mb-8">
                     
                     <!-- Root Note Selector -->
-                    <div>
+                    <div class="w-full sm:w-auto">
                         <label for="root-note" class="block text-sm font-medium text-gray-400 mb-1">Root Note</label>
                         <select id="root-note" class="w-full md:w-48 bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-md">
                             <!-- Options will be populated by JS -->
@@ -278,7 +277,7 @@
                     </div>
 
                     <!-- Chord Type Selector -->
-                    <div>
+                    <div class="w-full sm:w-auto">
                         <label for="chord-type" class="block text-sm font-medium text-gray-400 mb-1">Chord Type</label>
                         <select id="chord-type" class="w-full md:w-64 bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-md">
                             <!-- Options will be populated by JS -->
@@ -286,7 +285,7 @@
                     </div>
 
                     <!-- Inversion Selector -->
-                    <div>
+                    <div class="w-full sm:w-auto">
                         <label for="inversion" class="block text-sm font-medium text-gray-400 mb-1">Inversion</label>
                         <select id="inversion" class="w-full md:w-40 bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-md">
                             <option value="0">Root Position</option>
@@ -294,7 +293,7 @@
                     </div>
 
                     <!-- Base Octave Selector (UPDATED DEFAULT) -->
-                    <div>
+                    <div class="w-full sm:w-auto">
                         <label for="base-octave" class="block text-sm font-medium text-gray-400 mb-1">Base Octave</label>
                         <select id="base-octave" class="w-full md:w-40 bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-md">
                             <option value="3">Octave 3 (C3)</option>
@@ -304,7 +303,7 @@
                     </div>
 
                     <!-- Play Mode Selector -->
-                    <div>
+                    <div class="w-full sm:w-auto">
                         <label for="play-mode" class="block text-sm font-medium text-gray-400 mb-1">Play Mode</label>
                         <select id="play-mode" class="w-full md:w-48 bg-gray-700 border border-gray-600 text-white text-lg rounded-lg focus:ring-primary-teal focus:border-primary-teal p-3 shadow-md">
                             <option value="simultaneous">Simultaneous</option>
@@ -313,7 +312,7 @@
                     </div>
 
                     <!-- Accidental Toggle -->
-                    <div class="md:self-end">
+                    <div class="w-full sm:w-auto md:self-end">
                         <label for="accidental-toggle" class="block text-sm font-medium text-gray-400 mb-1">Accidentals</label>
                         <div class="flex bg-gray-700 border border-gray-600 rounded-lg overflow-hidden shadow-md">
                             <button id="sharps-btn" class="w-1/2 p-3 text-lg font-bold bg-primary-teal text-gray-900 transition-colors duration-200"># Sharps</button>
@@ -1509,7 +1508,7 @@
                 
                 // Default view on load
                 switchView('chord-view'); 
-
+                
                 // --- EVENT LISTENERS ---
                 
                 // Navigation
@@ -1592,4 +1591,3 @@
     </script>
 </body>
 </html>
-
