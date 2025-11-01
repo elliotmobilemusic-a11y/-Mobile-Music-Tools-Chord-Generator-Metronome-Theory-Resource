@@ -42,16 +42,16 @@
             font-family: 'Montserrat', 'sans-serif';
         }
 
-        /* White key styles - REDUCED SIZE FOR MOBILE */
+        /* White key styles - Base (Wide View) */
         .key.white {
-            width: 2.5rem; /* Reduced from 3.5rem */
-            height: 14rem; /* Reduced from 16rem */
+            width: 2.5rem; 
+            height: 14rem; 
             background-color: white;
             border: 2px solid #374151; /* gray-700 */
             border-top: 0;
             border-radius: 0 0 8px 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-            transition: background-color 0.1s, transform 0.05s;
+            transition: all 0.1s; /* Updated for smooth transition */
             cursor: pointer;
             z-index: 5;
         }
@@ -68,20 +68,20 @@
             position: relative;
         }
 
-        /* Black key styles - REDUCED SIZE FOR MOBILE */
+        /* Black key styles - Base (Wide View) */
         .key.black {
-            width: 1.5rem; /* Reduced from 2rem */
-            height: 9rem; /* Reduced from 10rem */
+            width: 1.5rem; 
+            height: 9rem; 
             background-color: #1a202c; 
             border: 2px solid #111827; 
             border-bottom-width: 4px;
             border-radius: 0 0 6px 6px;
             position: absolute;
             top: 0;
-            right: -0.75rem; /* Adjusted offset to match new width */
+            right: -0.75rem; 
             z-index: 10;
             box-shadow: 0 2px 4px rgba(0,0,0,0.7);
-            transition: background-color 0.1s, transform 0.05s;
+            transition: all 0.1s; /* Updated for smooth transition */
             cursor: pointer;
         }
         
@@ -111,13 +111,11 @@
             box-shadow: 0 0 15px 3px #2dd4bf;
         }
 
-        /* Key label styles */
+        /* Key label styles - Base (Wide View) */
         .key-label {
             position: absolute;
             font-weight: 700;
             pointer-events: none;
-            font-size: 1.125rem;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
         }
 
         .white-label {
@@ -126,6 +124,8 @@
             right: 0;
             text-align: center;
             color: #4b5563; /* gray-600 */
+            font-size: 1.125rem;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
         }
 
         .black-label {
@@ -135,6 +135,7 @@
             text-align: center;
             color: #d1d5db; /* gray-300 */
             font-size: 1rem;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
         }
 
         /* Highlighted label colors */
@@ -149,6 +150,28 @@
             font-weight: 800;
             text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
         }
+        
+        /* === COMPACT VIEW OVERRIDES (For mobile/fit mode) === */
+        #piano-keyboard.compact .key.white {
+            width: 1.5rem; /* Significantly smaller */
+            height: 10rem;
+        }
+        
+        #piano-keyboard.compact .key.black {
+            width: 1rem;
+            height: 7rem;
+            right: -0.5rem; 
+        }
+
+        #piano-keyboard.compact .white-label {
+            font-size: 0.75rem; /* Smaller font for labels */
+            bottom: 0.5rem;
+        }
+
+        #piano-keyboard.compact .black-label {
+            font-size: 0.6rem;
+            bottom: 0.4rem;
+        }
 
         /* Metronome Indicator Styles */
         #metronome-indicator {
@@ -158,19 +181,6 @@
             background-color: #fcd34d !important; /* accent-yellow */
             box-shadow: 0 0 10px #fcd34d, 0 0 20px rgba(252, 211, 77, 0.5) !important;
             transform: scale(1.1); /* Subtle pulse */
-        }
-        
-        /* Resource Loading Indicator - Adjusted colors for dark theme */
-        .dot-pulse {
-            position: relative;
-            left: -9999px;
-            width: 10px;
-            height: 10px;
-            border-radius: 5px;
-            background-color: #fcd34d; /* accent-yellow */
-            color: #fcd34d;
-            box-shadow: 9999px 0 0 0 #fcd34d;
-            animation: dotPulse 1.5s infinite linear;
         }
         
         /* Ensure the prose styles for the generated resource are applied */
@@ -342,10 +352,23 @@
                     <h2 id="chord-name" class="text-3xl font-extrabold text-white">C Major</h2>
                     <p id="chord-notes" class="text-xl text-primary-teal">C4 - E4 - G4</p>
                 </div>
+                
+                <!-- PIANO LAYOUT TOGGLE (New Feature) -->
+                <div class="flex justify-center mb-4">
+                    <div class="flex items-center space-x-3 bg-gray-700 p-2 rounded-lg border border-gray-600 shadow-xl">
+                        <span class="text-sm font-medium text-gray-300">Wide View (Scrollable)</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="piano-layout-toggle" value="" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-primary-teal peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-teal"></div>
+                        </label>
+                        <span class="text-sm font-medium text-gray-300">Compact View (Fit)</span>
+                    </div>
+                </div>
+
 
                 <!-- Piano Keyboard (Wider and horizontally scrollable) -->
                 <div class="flex justify-center overflow-x-scroll p-4 bg-gray-700 rounded-xl shadow-inner border border-gray-600">
-                    <div id="piano-keyboard" data-name="Piano-Diagram" class="relative flex flex-nowrap min-w-full">
+                    <div id="piano-keyboard" data-name="Piano-Diagram" class="relative flex flex-nowrap min-w-full compact">
                         <!-- Piano keys will be generated by JS -->
                     </div>
                 </div>
@@ -586,6 +609,7 @@
             const stopBtn = document.getElementById('stop-btn');
             const sharpsBtn = document.getElementById('sharps-btn');
             const flatsBtn = document.getElementById('flats-btn');
+            const layoutToggle = document.getElementById('piano-layout-toggle'); // New Toggle
             
             // Metronome Elements
             const bpmInput = document.getElementById('bpm-input-metro');
@@ -682,7 +706,27 @@
             }
 
             // --- 5. CHORD/KEYBOARD LOGIC ---
-
+            
+            // New function to handle the keyboard layout toggle
+            function togglePianoLayout() {
+                if (layoutToggle.checked) {
+                    // Compact View (Toggled ON - smaller keys)
+                    pianoContainer.classList.add('compact');
+                    // Enable horizontal scrolling if the full width is not enough (just in case)
+                    pianoContainer.parentElement.classList.add('overflow-x-scroll');
+                    pianoContainer.parentElement.classList.remove('overflow-x-hidden');
+                } else {
+                    // Wide View (Toggled OFF - larger keys)
+                    pianoContainer.classList.remove('compact');
+                    // Ensure scrolling is possible since keys are larger
+                    pianoContainer.parentElement.classList.add('overflow-x-scroll');
+                    pianoContainer.parentElement.classList.remove('overflow-x-hidden');
+                }
+                
+                // Re-highlight after size change in case the transition was awkward
+                refreshChordDisplay(); 
+            }
+            
             function downloadDiagram() {
                 const targetElement = document.getElementById('piano-keyboard');
                 if (!targetElement) {
@@ -1506,6 +1550,9 @@
                 renderSongsView();
                 refreshChordDisplay(); // Calculate and display the default chord
                 
+                // Apply the default (checked) state for the new toggle
+                togglePianoLayout(); 
+                
                 // Default view on load
                 switchView('chord-view'); 
                 
@@ -1517,6 +1564,9 @@
                         switchView(button.dataset.view);
                     });
                 });
+                
+                // NEW: Piano Layout Toggle Listener
+                layoutToggle.addEventListener('change', togglePianoLayout);
 
                 // Chord Event Listeners (Call refreshChordDisplay for immediate calculation)
                 rootSelect.addEventListener('change', refreshChordDisplay);
